@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>Biblo</string>
+    <key>CFBundleIdentifier</key>
+    <string>app.biblo.Biblo</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.1.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+
+    <!-- No Dock icon, no menu bar app entry -->
+    <key>LSUIElement</key>
+    <true/>
+
+    <!-- Minimum macOS version -->
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+
+    <!-- Needed for Sparkle (future) -->
+    <key>SUFeedURL</key>
+    <string>https://biblo.app/appcast.xml</string>
+    <key>SUPublicEDKey</key>
+    <string>REPLACE_WITH_SPARKLE_ED_KEY</string>
+</dict>
+</plist>

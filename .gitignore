@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Xcode
+apps/biblo/build/
+apps/biblo/*.xcodeproj/xcuserdata/
+apps/biblo/*.xcworkspace/xcuserdata/
+apps/biblo/DerivedData/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Node
+apps/web/node_modules/
+apps/web/.next/
+apps/web/out/
+apps/web/.env.local
+
+# Releases (built artifacts, not the xml feed)
+releases/*.dmg
+
+# Secrets
+*.p12
+ExportOptions.plist

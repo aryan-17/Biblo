@@ -1,0 +1,409 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		15BB3E3039C5AAA46B2850DD /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9DCD50CA195A3C92CAF1B0E /* Models.swift */; };
+		1D6D437B4248194EFA13B62D /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0FC43D93F541E11095E68A /* main.swift */; };
+		2CE18B010BF8128A822CCF76 /* ConfigLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C98692FC51F49DD5803B350F /* ConfigLoader.swift */; };
+		4E080DAA2E7B26979EB07895 /* WheelState.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7F014C8ED497705DED4D8BC /* WheelState.swift */; };
+		67F0E7351690739FCE8F2F70 /* WheelPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7103CC7D497117DF3A31ED /* WheelPanel.swift */; };
+		68D3ABCB1D9DFB48CCC3FDC7 /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5CA2403468CD3235A0D10CB /* HotkeyManager.swift */; };
+		720ECF1F909DB33B5996AC4B /* WheelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E39B8BB64CE0B59C934BFD8D /* WheelView.swift */; };
+		81C67FCD8BE8F89D31CBF8B5 /* WheelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B130B42CA76A97774D029C6A /* WheelController.swift */; };
+		A6F9CB120CAB5A57D0FB5D5E /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4E5D211A286CD3AD75C24D8B /* Carbon.framework */; };
+		ABAE89BF90613A91654D8BE7 /* BackdropWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAD8AE70418A776474D52E1E /* BackdropWindow.swift */; };
+		D581CCE284B8CDF4885C2991 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D7F3C4CB6E590C1F04AFF97 /* AppDelegate.swift */; };
+		F98D1AEC092B57842C562B99 /* ActionExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21787B301F9A20275CB81D3F /* ActionExecutor.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		21787B301F9A20275CB81D3F /* ActionExecutor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionExecutor.swift; sourceTree = "<group>"; };
+		22E916A74430CF4ACCEE35CD /* Biblo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Biblo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4E5D211A286CD3AD75C24D8B /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
+		8A0FC43D93F541E11095E68A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		8D7F3C4CB6E590C1F04AFF97 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		AB7103CC7D497117DF3A31ED /* WheelPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WheelPanel.swift; sourceTree = "<group>"; };
+		B130B42CA76A97774D029C6A /* WheelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WheelController.swift; sourceTree = "<group>"; };
+		B5CA2403468CD3235A0D10CB /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
+		C98692FC51F49DD5803B350F /* ConfigLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigLoader.swift; sourceTree = "<group>"; };
+		D7F014C8ED497705DED4D8BC /* WheelState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WheelState.swift; sourceTree = "<group>"; };
+		D9DCD50CA195A3C92CAF1B0E /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		DAD8AE70418A776474D52E1E /* BackdropWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackdropWindow.swift; sourceTree = "<group>"; };
+		E39B8BB64CE0B59C934BFD8D /* WheelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WheelView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		0F1D3DF37B1CA9C8C3B472CE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A6F9CB120CAB5A57D0FB5D5E /* Carbon.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0A9B8597D9812B959DDC9A2D /* Actions */ = {
+			isa = PBXGroup;
+			children = (
+				21787B301F9A20275CB81D3F /* ActionExecutor.swift */,
+			);
+			path = Actions;
+			sourceTree = "<group>";
+		};
+		2689D3DB6E5C3EDF092DDF98 /* Hotkey */ = {
+			isa = PBXGroup;
+			children = (
+				B5CA2403468CD3235A0D10CB /* HotkeyManager.swift */,
+			);
+			path = Hotkey;
+			sourceTree = "<group>";
+		};
+		5A99FFAAB09117C8CDE12864 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				D7F014C8ED497705DED4D8BC /* WheelState.swift */,
+				E39B8BB64CE0B59C934BFD8D /* WheelView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		76F053DCBDB328A4A89D73B5 /* Window */ = {
+			isa = PBXGroup;
+			children = (
+				DAD8AE70418A776474D52E1E /* BackdropWindow.swift */,
+				AB7103CC7D497117DF3A31ED /* WheelPanel.swift */,
+			);
+			path = Window;
+			sourceTree = "<group>";
+		};
+		7DF214E9EAB4DE87D7D172FC /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				22E916A74430CF4ACCEE35CD /* Biblo.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		93B6992C54C28A56D78D136F /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				0A9B8597D9812B959DDC9A2D /* Actions */,
+				B5D22FED653258329DD66C13 /* Controller */,
+				2689D3DB6E5C3EDF092DDF98 /* Hotkey */,
+				B4B4A32615F2D041AF0EA3D1 /* Models */,
+				5A99FFAAB09117C8CDE12864 /* Views */,
+				76F053DCBDB328A4A89D73B5 /* Window */,
+				8D7F3C4CB6E590C1F04AFF97 /* AppDelegate.swift */,
+				8A0FC43D93F541E11095E68A /* main.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		A087FCC7E64A14AE641DDD5B /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				4E5D211A286CD3AD75C24D8B /* Carbon.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		B4B4A32615F2D041AF0EA3D1 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				C98692FC51F49DD5803B350F /* ConfigLoader.swift */,
+				D9DCD50CA195A3C92CAF1B0E /* Models.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		B5D22FED653258329DD66C13 /* Controller */ = {
+			isa = PBXGroup;
+			children = (
+				B130B42CA76A97774D029C6A /* WheelController.swift */,
+			);
+			path = Controller;
+			sourceTree = "<group>";
+		};
+		D0BA304D5BBE0FD88ECE27BB = {
+			isa = PBXGroup;
+			children = (
+				93B6992C54C28A56D78D136F /* Sources */,
+				A087FCC7E64A14AE641DDD5B /* Frameworks */,
+				7DF214E9EAB4DE87D7D172FC /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		2D765433B246396F646B54DA /* Biblo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1AF92700DF1B5BEC80A36E9E /* Build configuration list for PBXNativeTarget "Biblo" */;
+			buildPhases = (
+				EF4A254E32E44D3AE88C69B0 /* Sources */,
+				0F1D3DF37B1CA9C8C3B472CE /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Biblo;
+			packageProductDependencies = (
+			);
+			productName = Biblo;
+			productReference = 22E916A74430CF4ACCEE35CD /* Biblo.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5BA1A917ECE5DBD11C0E04B0 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					2D765433B246396F646B54DA = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 06E409B458E1AB9AF7E91DBA /* Build configuration list for PBXProject "Biblo" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = D0BA304D5BBE0FD88ECE27BB;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 7DF214E9EAB4DE87D7D172FC /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2D765433B246396F646B54DA /* Biblo */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		EF4A254E32E44D3AE88C69B0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F98D1AEC092B57842C562B99 /* ActionExecutor.swift in Sources */,
+				D581CCE284B8CDF4885C2991 /* AppDelegate.swift in Sources */,
+				ABAE89BF90613A91654D8BE7 /* BackdropWindow.swift in Sources */,
+				2CE18B010BF8128A822CCF76 /* ConfigLoader.swift in Sources */,
+				68D3ABCB1D9DFB48CCC3FDC7 /* HotkeyManager.swift in Sources */,
+				15BB3E3039C5AAA46B2850DD /* Models.swift in Sources */,
+				81C67FCD8BE8F89D31CBF8B5 /* WheelController.swift in Sources */,
+				67F0E7351690739FCE8F2F70 /* WheelPanel.swift in Sources */,
+				4E080DAA2E7B26979EB07895 /* WheelState.swift in Sources */,
+				720ECF1F909DB33B5996AC4B /* WheelView.swift in Sources */,
+				1D6D437B4248194EFA13B62D /* main.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		36C61C996D114C98D6162F16 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.biblo.Biblo;
+				PRODUCT_NAME = Biblo;
+				SDKROOT = macosx;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		6411D5AB9B326BFC6E2A0EE9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		66F0DBE24474BA38A04CE89B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.biblo.Biblo;
+				PRODUCT_NAME = Biblo;
+				SDKROOT = macosx;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		A0A2EA43DD79902DD753BBDA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		06E409B458E1AB9AF7E91DBA /* Build configuration list for PBXProject "Biblo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6411D5AB9B326BFC6E2A0EE9 /* Debug */,
+				A0A2EA43DD79902DD753BBDA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		1AF92700DF1B5BEC80A36E9E /* Build configuration list for PBXNativeTarget "Biblo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				66F0DBE24474BA38A04CE89B /* Debug */,
+				36C61C996D114C98D6162F16 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 5BA1A917ECE5DBD11C0E04B0 /* Project object */;
+}

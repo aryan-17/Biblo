@@ -1,0 +1,40 @@
+name: Biblo
+options:
+  bundleIdPrefix: app.biblo
+  deploymentTarget:
+    macOS: "13.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+  generateEmptyDirectories: true
+
+configs:
+  Debug: debug
+  Release: release
+
+targets:
+  Biblo:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources
+    resources:
+      - path: Resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.biblo.Biblo
+        SWIFT_VERSION: "5.9"
+        MACOSX_DEPLOYMENT_TARGET: "13.0"
+        INFOPLIST_FILE: Resources/Info.plist
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ""
+        PRODUCT_NAME: Biblo
+        ENABLE_HARDENED_RUNTIME: YES
+      configs:
+        Debug:
+          SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+          DEBUG_INFORMATION_FORMAT: dwarf
+        Release:
+          SWIFT_OPTIMIZATION_LEVEL: "-O"
+          DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
+    dependencies:
+      - sdk: Carbon.framework

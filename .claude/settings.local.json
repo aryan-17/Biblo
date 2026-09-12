@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /Users/ctme/Documents/projects/biblo log --oneline -10)"
+    ]
+  }
+}
