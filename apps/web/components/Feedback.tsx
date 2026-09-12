@@ -142,12 +142,7 @@ export default function Feedback() {
               {status === "sending" ? "Sending…" : "Send Feedback"}
             </button>
 
-            {!FORMSPREE_ID && (
-              <p className="text-xs text-center" style={{ color: "#3a3a50" }}>
-                Set <code>NEXT_PUBLIC_FORMSPREE_ID</code> in Vercel env to
-                activate the form.
-              </p>
-            )}
+
           </form>
         )}
       </div>
