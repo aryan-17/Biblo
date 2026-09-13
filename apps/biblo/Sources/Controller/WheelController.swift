@@ -1,4 +1,5 @@
 import AppKit
+import Carbon.HIToolbox
 import SwiftUI
 
 /// Orchestrates the wheel lifecycle:
@@ -53,7 +54,7 @@ final class WheelController {
         // Register hotkey — F13 by default
         hotkeyMgr.onKeyDown = { [weak self] in self?.handleKeyDown() }
         hotkeyMgr.onKeyUp   = { [weak self] in self?.handleKeyUp()   }
-        hotkeyMgr.register(keyCode: 105)  // F13
+        hotkeyMgr.register(keyCode: 49, modifiers: UInt32(optionKey))  // ⌥Space
     }
 
     // ─────────────────────────────────────────────────────────────────────────
