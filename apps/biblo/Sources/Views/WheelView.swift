@@ -98,9 +98,7 @@ struct WheelView: View {
                         )
 
                         VStack(spacing: 3) {
-                            Image(systemName: seg.icon)
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundStyle(highlighted ? Color.white : Color.white.opacity(0.45))
+                            SegmentIconView(segment: seg, highlighted: highlighted)
 
                             Text(seg.label)
                                 .font(.system(size: 11, weight: highlighted ? .semibold : .regular))
@@ -160,5 +158,31 @@ struct WheelView: View {
                  startAngle: .radians(end),   endAngle: .radians(start), clockwise: true)
         p.closeSubpath()
         return p
+    }
+}
+
+// ─── Segment icon: app icon if launchApp, otherwise SF Symbol ─────────────────
+
+struct SegmentIconView: View {
+    let segment: Segment
+    let highlighted: Bool
+
+    private var appIcon: NSImage? {
+        guard case .launchApp(let id) = segment.actions.first else { return nil }
+        return AppIconCache.shared.icon(forBundleID: id)
+    }
+
+    var body: some View {
+        if let img = appIcon {
+            Image(nsImage: img)
+                .resizable()
+                .interpolation(.high)
+                .frame(width: 26, height: 26)
+                .opacity(highlighted ? 1.0 : 0.55)
+        } else {
+            Image(systemName: segment.icon)
+                .font(.system(size: 18, weight: .medium))
+                .foregroundStyle(highlighted ? Color.white : Color.white.opacity(0.45))
+        }
     }
 }

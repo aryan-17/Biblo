@@ -37,6 +37,24 @@ final class WheelController {
     private var activeScreen: NSScreen?
 
     // ─────────────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
+    // MARK: Public API
+    // ─────────────────────────────────────────────────────────────────────────
+
+    var currentWheel: Wheel { wheel }
+
+    /// Apply an updated wheel (called after settings save).
+    func apply(_ updated: Wheel) {
+        wheel       = updated
+        state.wheel = updated
+        stickyIndices = [:]
+        for (i, seg) in updated.segments.enumerated() {
+            stickyIndices[i] = seg.stickyIndex
+        }
+        state.actionIndices = stickyIndices
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // MARK: Setup
     // ─────────────────────────────────────────────────────────────────────────
 

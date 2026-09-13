@@ -66,8 +66,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func openPreferences() {
-        // TODO: v1 — full preferences window
-        NSLog("Biblo: preferences not yet implemented")
+        SettingsWindowController.show(wheel: wheelController.currentWheel) { [weak self] updated in
+            self?.wheelController.apply(updated)
+        }
     }
 
     @objc private func reloadConfig() {
