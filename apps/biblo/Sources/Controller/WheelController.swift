@@ -106,6 +106,7 @@ final class WheelController {
             // Tap: repeat last action
             if let last = lastFired {
                 let seg = wheel.segments[last.segmentIdx]
+                guard !seg.actions.isEmpty else { return }
                 let action = seg.actions[min(last.actionIdx, seg.actions.count - 1)]
                 ActionExecutor.execute(action)
             }
@@ -115,6 +116,7 @@ final class WheelController {
         guard let idx = state.highlightedIndex else { return }  // dead zone = cancel
 
         let seg = wheel.segments[idx]
+        guard !seg.actions.isEmpty else { return }
         let actionIdx = min(stickyIndices[idx] ?? 0, seg.actions.count - 1)
         let action = seg.actions[actionIdx]
 
@@ -133,6 +135,7 @@ final class WheelController {
     // ─────────────────────────────────────────────────────────────────────────
 
     private func startTracking() {
+        stopTracking()  // idempotent; guards against duplicate hotkey press events
         // Mouse movement
         mouseMonitor = NSEvent.addGlobalMonitorForEvents(
             matching: [.mouseMoved, .leftMouseDragged]
@@ -264,6 +267,7 @@ final class WheelController {
     private func fireCurrentSegment() {
         guard let idx = state.highlightedIndex else { return }
         let seg = wheel.segments[idx]
+        guard !seg.actions.isEmpty else { return }
         let actionIdx = min(stickyIndices[idx] ?? 0, seg.actions.count - 1)
 
         stickyIndices[idx] = actionIdx
