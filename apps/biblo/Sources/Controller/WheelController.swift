@@ -148,20 +148,21 @@ final class WheelController {
             self?.handleScroll(delta: event.scrollingDeltaY)
         }
 
-        // Key-down: track arrows for diagonal combos; handle non-arrow keys.
+        // Key-down: step through center on each press.
+        // Held arrow keys let diagonals be selected; each press steps one position.
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self = self else { return event }
             switch event.keyCode {
             case 123, 124, 125, 126:              // arrow keys
                 self.pressedArrows.insert(event.keyCode)
-                self.updateSegmentFromArrows()
+                self.stepTowardPressedDirection()
                 return nil
             case 53:                              // Esc → cancel and close immediately
                 self.cancelAndClose()
                 return nil
             case 36, 76:                          // Return / numpad Enter
                 if self.state.highlightedIndex == nil {
-                    self.cancelAndClose()         // center selected → cancel
+                    self.cancelAndClose()
                 } else {
                     self.fireCurrentSegment()
                 }
@@ -175,12 +176,11 @@ final class WheelController {
             }
         }
 
-        // Key-up: remove arrow from set, recompute direction.
+        // Key-up: remove from set, no selection change (selection sticks on key release).
         keyUpMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyUp) { [weak self] event in
             guard let self = self else { return event }
             if [123, 124, 125, 126].contains(event.keyCode) {
                 self.pressedArrows.remove(event.keyCode)
-                self.updateSegmentFromArrows()
                 return nil
             }
             return event
@@ -244,25 +244,39 @@ final class WheelController {
         state.actionIndices = stickyIndices
     }
 
-    /// Compute highlighted segment from the set of held arrow keys.
-    /// Segment 0=↑, 1=↑→, 2=→, 3=↓→, 4=↓, 5=↓←, 6=←, 7=↑←
-    private func updateSegmentFromArrows() {
+    /// On each arrow key press, step one position along the axis toward the pressed direction.
+    /// Passes through center (nil) when moving from the exact opposite segment.
+    ///
+    /// Axes (segment ↔ center ↔ opposite):
+    ///   0 ↔ center ↔ 4  (↑ / ↓)
+    ///   1 ↔ center ↔ 5  (↑→ / ↓←)
+    ///   2 ↔ center ↔ 6  (→ / ←)
+    ///   3 ↔ center ↔ 7  (↓→ / ↑←)
+    private func stepTowardPressedDirection() {
         let up    = pressedArrows.contains(126)
         let right = pressedArrows.contains(124)
         let down  = pressedArrows.contains(125)
         let left  = pressedArrows.contains(123)
 
+        let target: Int
         switch (up, right, down, left) {
-        case (true,  false, false, false): state.highlightedIndex = 0
-        case (true,  true,  false, false): state.highlightedIndex = 1
-        case (false, true,  false, false): state.highlightedIndex = 2
-        case (false, true,  true,  false): state.highlightedIndex = 3
-        case (false, false, true,  false): state.highlightedIndex = 4
-        case (false, false, true,  true):  state.highlightedIndex = 5
-        case (false, false, false, true):  state.highlightedIndex = 6
-        case (true,  false, false, true):  state.highlightedIndex = 7
-        case (false, false, false, false): break  // no arrows held — mouse controls
-        default: break                            // opposing keys (↑↓ or ←→) — ignore
+        case (true,  false, false, false): target = 0
+        case (true,  true,  false, false): target = 1
+        case (false, true,  false, false): target = 2
+        case (false, true,  true,  false): target = 3
+        case (false, false, true,  false): target = 4
+        case (false, false, true,  true):  target = 5
+        case (false, false, false, true):  target = 6
+        case (true,  false, false, true):  target = 7
+        default: return  // no keys or opposing pair — ignore
+        }
+
+        let opposite = (target + 4) % 8
+
+        if state.highlightedIndex == opposite {
+            state.highlightedIndex = nil    // step through center
+        } else {
+            state.highlightedIndex = target // at center or elsewhere → jump to target
         }
     }
 
