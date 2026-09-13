@@ -43,13 +43,22 @@ struct WheelView: View {
                         ), lineWidth: 1)
                     }
 
-                    // Dead-zone circle
+                    // Dead-zone circle — highlighted when center is selected
+                    let centerSelected = state.highlightedIndex == nil
                     let dz = Path(ellipseIn: CGRect(
                         x: origin.x - innerRadius, y: origin.y - innerRadius,
                         width: innerRadius * 2,    height: innerRadius * 2
                     ))
-                    ctx.fill(dz,   with: .color(Color.white.opacity(0.035)))
-                    ctx.stroke(dz, with: .color(Color.white.opacity(0.07)), lineWidth: 1)
+                    ctx.fill(dz, with: .color(
+                        centerSelected
+                            ? accentColor.opacity(0.45)
+                            : Color.white.opacity(0.035)
+                    ))
+                    ctx.stroke(dz, with: .color(
+                        centerSelected
+                            ? accentColor.opacity(0.8)
+                            : Color.white.opacity(0.07)
+                    ), lineWidth: centerSelected ? 1.5 : 1)
 
                     // Centre dot
                     let dotR: CGFloat = 3
@@ -58,10 +67,22 @@ struct WheelView: View {
                         width: dotR * 2,    height: dotR * 2
                     ))
                     ctx.fill(dot, with: .color(
-                        state.highlightedIndex == nil
-                            ? Color.white.opacity(0.35)
-                            : accentColor
+                        centerSelected ? Color.white : accentColor
                     ))
+                }
+
+                // ── Center "Cancel" label (SwiftUI — only when center selected) ──
+                if state.highlightedIndex == nil {
+                    VStack(spacing: 2) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(Color.white)
+                        Text("Cancel")
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundStyle(Color.white.opacity(0.7))
+                    }
+                    .position(origin)
+                    .animation(.easeOut(duration: 0.08), value: state.highlightedIndex == nil)
                 }
 
                 // ── Labels (SwiftUI for SF Symbols + text) ────────────────
