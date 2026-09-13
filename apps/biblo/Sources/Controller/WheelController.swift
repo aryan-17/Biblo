@@ -1,6 +1,7 @@
 import AppKit
 import Carbon.HIToolbox
 import SwiftUI
+import Combine
 
 /// Orchestrates the wheel lifecycle:
 /// hotkey down → show → track mouse → hotkey up → fire action.
@@ -28,6 +29,9 @@ final class WheelController {
 
     // Tracks currently held arrow keys for diagonal detection
     private var pressedArrows: Set<UInt16> = []
+
+    // ── Haptics ───────────────────────────────────────────────────────────────
+    private var cancellables: Set<AnyCancellable> = []
 
     // ── Timing ────────────────────────────────────────────────────────────────
     private var keyDownDate: Date?
@@ -72,6 +76,17 @@ final class WheelController {
         let hostingView = NSHostingView(rootView: WheelView(state: state))
         hostingView.autoresizingMask = [.width, .height]
         panel.contentView = hostingView
+
+        // Haptic feedback on every segment change (including center)
+        state.$highlightedIndex
+            .dropFirst()
+            .removeDuplicates()
+            .sink { _ in
+                NSHapticFeedbackManager.defaultPerformer.perform(
+                    .alignment, performanceTime: .default
+                )
+            }
+            .store(in: &cancellables)
 
         // Register hotkey — F13 by default
         hotkeyMgr.onKeyDown = { [weak self] in self?.handleKeyDown() }
