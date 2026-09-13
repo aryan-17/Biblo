@@ -20,7 +20,7 @@ enum ConfigLoader {
     static func defaultWheel() -> Wheel {
         Wheel(
             id: "main",
-            hotkey: HotkeyConfig(key: "F13", modifiers: []),
+            hotkey: HotkeyConfig(key: "Space", modifiers: ["option"]),
             segments: [
                 seg("Terminal",  icon: "terminal",           action: .runShell(command: "open -a Terminal")),
                 seg("Browser",   icon: "safari",             action: .launchApp(bundleID: "com.apple.Safari")),
