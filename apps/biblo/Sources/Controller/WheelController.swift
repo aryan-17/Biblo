@@ -83,7 +83,7 @@ final class WheelController {
             .removeDuplicates()
             .sink { _ in
                 NSHapticFeedbackManager.defaultPerformer.perform(
-                    .alignment, performanceTime: .default
+                    .generic, performanceTime: .default
                 )
             }
             .store(in: &cancellables)
