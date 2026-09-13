@@ -156,12 +156,15 @@ final class WheelController {
                 self.pressedArrows.insert(event.keyCode)
                 self.updateSegmentFromArrows()
                 return nil
-            case 53:                              // Esc → dead zone (cancel on release)
-                self.pressedArrows.removeAll()
-                self.state.highlightedIndex = nil
+            case 53:                              // Esc → cancel and close immediately
+                self.cancelAndClose()
                 return nil
             case 36, 76:                          // Return / numpad Enter
-                self.fireCurrentSegment()
+                if self.state.highlightedIndex == nil {
+                    self.cancelAndClose()         // center selected → cancel
+                } else {
+                    self.fireCurrentSegment()
+                }
                 return nil
             default:
                 if let ch = event.characters, let n = Int(ch), (1...8).contains(n) {
@@ -261,6 +264,16 @@ final class WheelController {
         case (false, false, false, false): break  // no arrows held — mouse controls
         default: break                            // opposing keys (↑↓ or ←→) — ignore
         }
+    }
+
+    /// Cancel with no action and close the wheel immediately.
+    private func cancelAndClose() {
+        keyDownDate = nil
+        pressedArrows.removeAll()
+        stopTracking()
+        panel.orderOut(nil)
+        backdrop.orderOut(nil)
+        state.highlightedIndex = nil
     }
 
     /// Fire the currently highlighted segment's action and dismiss the wheel.
