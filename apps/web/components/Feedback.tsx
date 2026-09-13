@@ -2,7 +2,7 @@
 
 import { useState, FormEvent } from "react";
 
-const FORMSPREE_ID = process.env.NEXT_PUBLIC_FORMSPREE_ID ?? "";
+const FORMSPREE_ID = process.env.FORMSPREE_ID ?? "";
 
 export default function Feedback() {
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">(
