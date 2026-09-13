@@ -139,10 +139,22 @@ final class WheelController {
             self?.handleScroll(delta: event.scrollingDeltaY)
         }
 
-        // Keys 1–8 — jump to segment directly
+        // Keyboard navigation
         keyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard let ch = event.characters, let n = Int(ch), (1...8).contains(n) else { return }
-            self?.state.highlightedIndex = n - 1
+            guard let self = self else { return }
+            switch event.keyCode {
+            case 123: self.cycleSegment(by: -1)     // ← counter-clockwise
+            case 124: self.cycleSegment(by:  1)     // → clockwise
+            case 126: self.handleScroll(delta:  1)  // ↑ previous action
+            case 125: self.handleScroll(delta: -1)  // ↓ next action
+            case 36, 76:                             // Return / numpad Enter → fire
+                self.fireCurrentSegment()
+            default:
+                // 1–8 jump directly to segment
+                if let ch = event.characters, let n = Int(ch), (1...8).contains(n) {
+                    self.state.highlightedIndex = n - 1
+                }
+            }
         }
 
         // Seed immediately so the first frame is correct
@@ -199,6 +211,31 @@ final class WheelController {
             : (cur - 1 + seg.actions.count) % seg.actions.count
         stickyIndices[idx] = cur
         state.actionIndices = stickyIndices
+    }
+
+    /// Rotate highlighted segment by delta (positive = clockwise).
+    private func cycleSegment(by delta: Int) {
+        let count = wheel.segments.count
+        let current = state.highlightedIndex ?? (delta > 0 ? count - 1 : 0)
+        state.highlightedIndex = (current + delta + count) % count
+    }
+
+    /// Fire the currently highlighted segment's action and dismiss the wheel.
+    private func fireCurrentSegment() {
+        guard let idx = state.highlightedIndex else { return }
+        let seg = wheel.segments[idx]
+        let actionIdx = min(stickyIndices[idx] ?? 0, seg.actions.count - 1)
+
+        stickyIndices[idx] = actionIdx
+        lastFired = (idx, actionIdx)
+
+        keyDownDate = nil
+        stopTracking()
+        panel.orderOut(nil)
+        backdrop.orderOut(nil)
+        state.highlightedIndex = nil
+
+        ActionExecutor.execute(seg.actions[actionIdx])
     }
 
     // ─────────────────────────────────────────────────────────────────────────
