@@ -142,18 +142,20 @@ final class WheelController {
         }
 
         // Keyboard navigation — local monitor works because panel is now key window.
-        // Returns nil to consume arrow/return keys (prevents them reaching other responders).
+        // Arrow keys map to cardinal segments (up=0, right=2, down=4, left=6).
+        // Escape deselects (dead zone) so releasing cancels.
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self = self else { return event }
             switch event.keyCode {
-            case 123: self.cycleSegment(by: -1);    return nil  // ← counter-clockwise
-            case 124: self.cycleSegment(by:  1);    return nil  // → clockwise
-            case 126: self.handleScroll(delta:  1); return nil  // ↑ previous action
-            case 125: self.handleScroll(delta: -1); return nil  // ↓ next action
-            case 36, 76:                                        // Return / numpad Enter
-                self.fireCurrentSegment();          return nil
+            case 126: self.state.highlightedIndex = 0; return nil  // ↑ top
+            case 124: self.state.highlightedIndex = 2; return nil  // → right
+            case 125: self.state.highlightedIndex = 4; return nil  // ↓ bottom
+            case 123: self.state.highlightedIndex = 6; return nil  // ← left
+            case 53:  self.state.highlightedIndex = nil; return nil // Esc → dead zone
+            case 36, 76:                                            // Return / numpad Enter
+                self.fireCurrentSegment();             return nil
             default:
-                // 1–8 jump directly to segment
+                // 1–8 jump directly to any of the 8 segments
                 if let ch = event.characters, let n = Int(ch), (1...8).contains(n) {
                     self.state.highlightedIndex = n - 1
                     return nil
@@ -216,13 +218,6 @@ final class WheelController {
             : (cur - 1 + seg.actions.count) % seg.actions.count
         stickyIndices[idx] = cur
         state.actionIndices = stickyIndices
-    }
-
-    /// Rotate highlighted segment by delta (positive = clockwise).
-    private func cycleSegment(by delta: Int) {
-        let count = wheel.segments.count
-        let current = state.highlightedIndex ?? (delta > 0 ? count - 1 : 0)
-        state.highlightedIndex = (current + delta + count) % count
     }
 
     /// Fire the currently highlighted segment's action and dismiss the wheel.
