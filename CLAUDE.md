@@ -43,7 +43,7 @@ Plan: `PLAN.md`
   ```bash
   cd apps/web && npm run build
   ```
-- **`NEXT_PUBLIC_` prefix required** for any env var used client-side. Missing prefix = undefined in browser.
+- **Do not change env var names in Feedback.tsx.** `FORMSPREE_ID` is intentional — do not rename to `NEXT_PUBLIC_FORMSPREE_ID`.
 - **No `ssr: false` in Server Components.** Wrap in a `"use client"` component first (see `HeroWrapper.tsx`).
 - **No `node_modules/` edits.** Fix deps at source or patch via `package.json`.
 
