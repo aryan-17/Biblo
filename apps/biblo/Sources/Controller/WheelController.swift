@@ -24,6 +24,10 @@ final class WheelController {
     private var mouseMonitor:  Any?
     private var scrollMonitor: Any?
     private var keyMonitor:    Any?
+    private var keyUpMonitor:  Any?
+
+    // Tracks currently held arrow keys for diagonal detection
+    private var pressedArrows: Set<UInt16> = []
 
     // ── Timing ────────────────────────────────────────────────────────────────
     private var keyDownDate: Date?
@@ -141,21 +145,22 @@ final class WheelController {
             self?.handleScroll(delta: event.scrollingDeltaY)
         }
 
-        // Keyboard navigation — local monitor works because panel is now key window.
-        // Arrow keys map to cardinal segments (up=0, right=2, down=4, left=6).
-        // Escape deselects (dead zone) so releasing cancels.
+        // Key-down: track arrows for diagonal combos; handle non-arrow keys.
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self = self else { return event }
             switch event.keyCode {
-            case 126: self.state.highlightedIndex = 0; return nil  // ↑ top
-            case 124: self.state.highlightedIndex = 2; return nil  // → right
-            case 125: self.state.highlightedIndex = 4; return nil  // ↓ bottom
-            case 123: self.state.highlightedIndex = 6; return nil  // ← left
-            case 53:  self.state.highlightedIndex = nil; return nil // Esc → dead zone
-            case 36, 76:                                            // Return / numpad Enter
-                self.fireCurrentSegment();             return nil
+            case 123, 124, 125, 126:              // arrow keys
+                self.pressedArrows.insert(event.keyCode)
+                self.updateSegmentFromArrows()
+                return nil
+            case 53:                              // Esc → dead zone (cancel on release)
+                self.pressedArrows.removeAll()
+                self.state.highlightedIndex = nil
+                return nil
+            case 36, 76:                          // Return / numpad Enter
+                self.fireCurrentSegment()
+                return nil
             default:
-                // 1–8 jump directly to any of the 8 segments
                 if let ch = event.characters, let n = Int(ch), (1...8).contains(n) {
                     self.state.highlightedIndex = n - 1
                     return nil
@@ -164,17 +169,30 @@ final class WheelController {
             }
         }
 
+        // Key-up: remove arrow from set, recompute direction.
+        keyUpMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyUp) { [weak self] event in
+            guard let self = self else { return event }
+            if [123, 124, 125, 126].contains(event.keyCode) {
+                self.pressedArrows.remove(event.keyCode)
+                self.updateSegmentFromArrows()
+                return nil
+            }
+            return event
+        }
+
         // Seed immediately so the first frame is correct
         updateFromCursor()
     }
 
     private func stopTracking() {
-        [mouseMonitor, scrollMonitor, keyMonitor].compactMap { $0 }.forEach {
+        [mouseMonitor, scrollMonitor, keyMonitor, keyUpMonitor].compactMap { $0 }.forEach {
             NSEvent.removeMonitor($0)
         }
         mouseMonitor  = nil
         scrollMonitor = nil
         keyMonitor    = nil
+        keyUpMonitor  = nil
+        pressedArrows.removeAll()
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -218,6 +236,28 @@ final class WheelController {
             : (cur - 1 + seg.actions.count) % seg.actions.count
         stickyIndices[idx] = cur
         state.actionIndices = stickyIndices
+    }
+
+    /// Compute highlighted segment from the set of held arrow keys.
+    /// Segment 0=↑, 1=↑→, 2=→, 3=↓→, 4=↓, 5=↓←, 6=←, 7=↑←
+    private func updateSegmentFromArrows() {
+        let up    = pressedArrows.contains(126)
+        let right = pressedArrows.contains(124)
+        let down  = pressedArrows.contains(125)
+        let left  = pressedArrows.contains(123)
+
+        switch (up, right, down, left) {
+        case (true,  false, false, false): state.highlightedIndex = 0
+        case (true,  true,  false, false): state.highlightedIndex = 1
+        case (false, true,  false, false): state.highlightedIndex = 2
+        case (false, true,  true,  false): state.highlightedIndex = 3
+        case (false, false, true,  false): state.highlightedIndex = 4
+        case (false, false, true,  true):  state.highlightedIndex = 5
+        case (false, false, false, true):  state.highlightedIndex = 6
+        case (true,  false, false, true):  state.highlightedIndex = 7
+        case (false, false, false, false): break  // no arrows held — mouse controls
+        default: break                            // opposing keys (↑↓ or ←→) — ignore
+        }
     }
 
     /// Fire the currently highlighted segment's action and dismiss the wheel.
