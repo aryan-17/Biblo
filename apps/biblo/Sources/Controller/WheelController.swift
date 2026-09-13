@@ -81,9 +81,11 @@ final class WheelController {
         state.wheelOrigin = toViewCoord(cursor, screen: screen)
         state.highlightedIndex = nil
 
-        // Show backdrop first (lower z-order), then panel
+        // Show backdrop first (lower z-order), then panel.
+        // makeKeyAndOrderFront lets panel receive keyboard events without
+        // activating the app (nonactivatingPanel keeps frontmost app unchanged).
         backdrop.orderFront(nil)
-        panel.orderFront(nil)
+        panel.makeKeyAndOrderFront(nil)
 
         startTracking()
     }
@@ -139,21 +141,24 @@ final class WheelController {
             self?.handleScroll(delta: event.scrollingDeltaY)
         }
 
-        // Keyboard navigation
-        keyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard let self = self else { return }
+        // Keyboard navigation — local monitor works because panel is now key window.
+        // Returns nil to consume arrow/return keys (prevents them reaching other responders).
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self = self else { return event }
             switch event.keyCode {
-            case 123: self.cycleSegment(by: -1)     // ← counter-clockwise
-            case 124: self.cycleSegment(by:  1)     // → clockwise
-            case 126: self.handleScroll(delta:  1)  // ↑ previous action
-            case 125: self.handleScroll(delta: -1)  // ↓ next action
-            case 36, 76:                             // Return / numpad Enter → fire
-                self.fireCurrentSegment()
+            case 123: self.cycleSegment(by: -1);    return nil  // ← counter-clockwise
+            case 124: self.cycleSegment(by:  1);    return nil  // → clockwise
+            case 126: self.handleScroll(delta:  1); return nil  // ↑ previous action
+            case 125: self.handleScroll(delta: -1); return nil  // ↓ next action
+            case 36, 76:                                        // Return / numpad Enter
+                self.fireCurrentSegment();          return nil
             default:
                 // 1–8 jump directly to segment
                 if let ch = event.characters, let n = Int(ch), (1...8).contains(n) {
                     self.state.highlightedIndex = n - 1
+                    return nil
                 }
+                return event
             }
         }
 
