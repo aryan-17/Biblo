@@ -20,6 +20,7 @@ final class WheelController {
     // ── Windows (created once, reused) ────────────────────────────────────────
     private let panel    = WheelPanel()
     private let backdrop = BackdropWindow()
+    private let toast    = ToastWindow()
 
     // ── Event monitors (non-nil only while wheel is open) ────────────────────
     private var mouseMonitor:  Any?
@@ -145,7 +146,7 @@ final class WheelController {
                 let actions = effectiveActions(for: last.segmentIdx)
                 guard !actions.isEmpty else { return }
                 let action = actions[min(last.actionIdx, actions.count - 1)]
-                ActionExecutor.execute(action)
+                fireAction(action)
             }
             return
         }
@@ -161,7 +162,7 @@ final class WheelController {
         stickyIndices[idx] = actionIdx
         lastFired = (idx, actionIdx)
 
-        ActionExecutor.execute(action)
+        fireAction(action)
 
         // Reset highlight
         state.highlightedIndex = nil
@@ -317,6 +318,17 @@ final class WheelController {
         }
     }
 
+    /// Executes `action` and shows a toast if it captured output to clipboard.
+    private func fireAction(_ action: BibloAction) {
+        ActionExecutor.execute(action) { [weak self] output in
+            guard !output.isEmpty else { return }
+            self?.toast.show(
+                message: "Copied \(output.count) char\(output.count == 1 ? "" : "s")",
+                on: self?.activeScreen
+            )
+        }
+    }
+
     /// Cancel with no action and close the wheel immediately.
     private func cancelAndClose() {
         keyDownDate = nil
@@ -343,7 +355,7 @@ final class WheelController {
         backdrop.orderOut(nil)
         state.highlightedIndex = nil
 
-        ActionExecutor.execute(actions[actionIdx])
+        fireAction(actions[actionIdx])
     }
 
     // ─────────────────────────────────────────────────────────────────────────
