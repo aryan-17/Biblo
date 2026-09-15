@@ -216,6 +216,40 @@ than nesting, faster to reach, and it sidesteps the eight-segment limit honestly
 - Multi-monitor origin rules
 - Config sharing / import from a URL
 
+### Engineer Edition — power-user features
+
+**Tier E1 — Tier 1 (in progress)**
+
+**Dynamic segments from shell output.** A segment with `dynamicCommand` runs a shell
+command at wheel-open time; each output line becomes a `runShell` action. Engineers
+configure `git branch | head -8` for a branch-switcher, `docker ps --format '{{.Names}}'`
+for a container wheel, etc. Commands run in parallel with a 1-second timeout.
+
+**Variable substitution in commands.** Any command string can embed `{{clipboard}}`,
+`{{frontapp.bundle}}`, `{{date}}`, `{{time}}` — resolved at execution time.
+Example: `open "https://jira.co/browse/{{clipboard}}"` opens the ticket whose key
+was copied. Frontmost app does not change while the wheel is open (nonactivatingPanel),
+so `{{frontapp.bundle}}` resolves to the user's working app.
+
+**Shell output capture.** `"captureOutput": true` on a `runShell` action captures
+stdout to the clipboard and shows a toast confirmation. Engineers use this to run
+`git rev-parse HEAD`, `pbcopy` alternatives, script output inspection.
+
+**Tier E2 — next**
+
+- [ ] SSH host wheel — parse `~/.ssh/config` for hosts, level-2 actions open terminal + SSH
+- [ ] Per-app context wheels — Xcode: build/test/clean/run; VSCode: terminal/format/diff
+- [ ] Multi-step pipelines — `"type": "pipeline", "steps": [...]` with progress indicator
+- [ ] Service health in live segment state — ping URL, show green/red dot
+- [ ] `{{selection}}` token (requires Accessibility permission — ask only on first use)
+
+**Tier E3 — later**
+
+- [ ] Environment switcher (swap symlinks + restart service)
+- [ ] Process killer by name (`"type": "killProcess", "name": "node"`)
+- [ ] Git branch switcher via dynamic segment + `git checkout {{item}}`
+- [ ] `LABEL|COMMAND` format in dynamic command output for custom display labels
+
 ---
 
 ## 4. Build order
