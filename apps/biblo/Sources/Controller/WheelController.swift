@@ -117,6 +117,10 @@ final class WheelController {
         // Wheel origin in SwiftUI view coordinates (y-down, origin top-left of screen)
         state.wheelOrigin = toViewCoord(cursor, screen: screen)
         state.highlightedIndex = nil
+        state.dynamicActions = [:]   // clear stale results from last open
+
+        // Populate dynamic segments before showing — blocks briefly for fast commands
+        populateDynamicSegments()
 
         // Show backdrop first (lower z-order), then panel.
         // makeKeyAndOrderFront lets panel receive keyboard events without
@@ -138,9 +142,9 @@ final class WheelController {
         if elapsed < tapThreshold {
             // Tap: repeat last action
             if let last = lastFired {
-                let seg = wheel.segments[last.segmentIdx]
-                guard !seg.actions.isEmpty else { return }
-                let action = seg.actions[min(last.actionIdx, seg.actions.count - 1)]
+                let actions = effectiveActions(for: last.segmentIdx)
+                guard !actions.isEmpty else { return }
+                let action = actions[min(last.actionIdx, actions.count - 1)]
                 ActionExecutor.execute(action)
             }
             return
@@ -148,10 +152,10 @@ final class WheelController {
 
         guard let idx = state.highlightedIndex else { return }  // dead zone = cancel
 
-        let seg = wheel.segments[idx]
-        guard !seg.actions.isEmpty else { return }
-        let actionIdx = min(stickyIndices[idx] ?? 0, seg.actions.count - 1)
-        let action = seg.actions[actionIdx]
+        let actions = effectiveActions(for: idx)
+        guard !actions.isEmpty else { return }
+        let actionIdx = min(stickyIndices[idx] ?? 0, actions.count - 1)
+        let action = actions[actionIdx]
 
         // Update sticky
         stickyIndices[idx] = actionIdx
@@ -266,13 +270,13 @@ final class WheelController {
 
     private func handleScroll(delta: CGFloat) {
         guard let idx = state.highlightedIndex else { return }
-        let seg = wheel.segments[idx]
-        guard seg.actions.count > 1 else { return }
+        let actions = effectiveActions(for: idx)
+        guard actions.count > 1 else { return }
 
         var cur = stickyIndices[idx] ?? 0
         cur = delta < 0
-            ? (cur + 1) % seg.actions.count
-            : (cur - 1 + seg.actions.count) % seg.actions.count
+            ? (cur + 1) % actions.count
+            : (cur - 1 + actions.count) % actions.count
         stickyIndices[idx] = cur
         state.actionIndices = stickyIndices
     }
@@ -326,9 +330,9 @@ final class WheelController {
     /// Fire the currently highlighted segment's action and dismiss the wheel.
     private func fireCurrentSegment() {
         guard let idx = state.highlightedIndex else { return }
-        let seg = wheel.segments[idx]
-        guard !seg.actions.isEmpty else { return }
-        let actionIdx = min(stickyIndices[idx] ?? 0, seg.actions.count - 1)
+        let actions = effectiveActions(for: idx)
+        guard !actions.isEmpty else { return }
+        let actionIdx = min(stickyIndices[idx] ?? 0, actions.count - 1)
 
         stickyIndices[idx] = actionIdx
         lastFired = (idx, actionIdx)
@@ -339,7 +343,7 @@ final class WheelController {
         backdrop.orderOut(nil)
         state.highlightedIndex = nil
 
-        ActionExecutor.execute(seg.actions[actionIdx])
+        ActionExecutor.execute(actions[actionIdx])
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -353,5 +357,74 @@ final class WheelController {
             x: screenPoint.x - screen.frame.origin.x,
             y: screen.frame.height - (screenPoint.y - screen.frame.origin.y)
         )
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // MARK: Dynamic segments
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /// Returns populated dynamic actions for `segmentIndex` if available,
+    /// falling back to the segment's static actions array.
+    private func effectiveActions(for segmentIndex: Int) -> [BibloAction] {
+        state.dynamicActions[segmentIndex] ?? wheel.segments[segmentIndex].actions
+    }
+
+    /// For each segment with a dynamicCommand, runs that command in parallel
+    /// (1-second timeout per command) and stores results in state.dynamicActions.
+    /// Blocks the calling thread — call before showing the wheel.
+    private func populateDynamicSegments() {
+        let indexed = wheel.segments.enumerated().filter { $0.element.dynamicCommand != nil }
+        guard !indexed.isEmpty else { return }
+
+        let group = DispatchGroup()
+        var results: [Int: [BibloAction]] = [:]
+        let lock = NSLock()
+
+        for (i, seg) in indexed {
+            guard let raw = seg.dynamicCommand, !raw.isEmpty else { continue }
+            let cmd = VariableResolver.resolve(raw)
+            group.enter()
+            DispatchQueue.global(qos: .userInitiated).async {
+                let actions = self.runDynamicCommand(cmd)
+                lock.lock()
+                results[i] = actions
+                lock.unlock()
+                group.leave()
+            }
+        }
+
+        // Wait up to 1 second total (per-command timeout is inside runDynamicCommand)
+        _ = group.wait(timeout: .now() + 1.0)
+        state.dynamicActions = results
+    }
+
+    /// Executes `command` via /bin/zsh -lc with a 1-second timeout.
+    /// Each non-empty output line becomes a runShell action.
+    /// Returns at most 8 actions (wheel segment limit).
+    private func runDynamicCommand(_ command: String) -> [BibloAction] {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/bin/zsh")
+        task.arguments     = ["-lc", command]
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.standardError  = Pipe()  // discard stderr
+
+        guard (try? task.run()) != nil else { return [] }
+
+        // Poll with 1-second deadline
+        let deadline = Date().addingTimeInterval(1.0)
+        while task.isRunning && Date() < deadline {
+            Thread.sleep(forTimeInterval: 0.01)
+        }
+        if task.isRunning { task.terminate() }
+
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        guard let output = String(data: data, encoding: .utf8) else { return [] }
+
+        // ponytail: LABEL|CMD format deferred — add when first user requests custom display labels
+        return output
+            .split(separator: "\n", omittingEmptySubsequences: true)
+            .prefix(8)
+            .map { BibloAction.runShell(command: String($0), captureOutput: false) }
     }
 }

@@ -92,9 +92,10 @@ struct WheelView: View {
                         let mid = midAngle(i: i, n: segCount)
                         let lx  = origin.x + labelRadius * CGFloat(cos(mid))
                         let ly  = origin.y + labelRadius * CGFloat(sin(mid))
-                        let actionIdx = min(
+                        let effective = state.dynamicActions[i] ?? seg.actions
+                        let clampedIdx = effective.isEmpty ? 0 : min(
                             state.actionIndices[i] ?? seg.stickyIndex,
-                            seg.actions.count - 1
+                            effective.count - 1
                         )
 
                         VStack(spacing: 3) {
@@ -105,9 +106,9 @@ struct WheelView: View {
                                 .foregroundStyle(highlighted ? Color.white : Color.white.opacity(0.38))
                                 .fixedSize()
 
-                            // Sub-label for level-2 segments
-                            if seg.actions.count > 1 {
-                                Text(seg.actions[actionIdx].displayLabel)
+                            // Sub-label for level-2 segments (static) or any dynamic segment
+                            if effective.count > 1 {
+                                Text(effective[clampedIdx].displayLabel)
                                     .font(.system(size: 9))
                                     .foregroundStyle(
                                         highlighted
