@@ -22,7 +22,7 @@ enum ConfigLoader {
             id: "main",
             hotkey: HotkeyConfig(key: "Space", modifiers: ["option"]),
             segments: [
-                seg("Terminal",  icon: "terminal",           action: .runShell(command: "open -a Terminal")),
+                seg("Terminal",  icon: "terminal",           action: .runShell(command: "open -a Terminal", captureOutput: false)),
                 seg("Browser",   icon: "safari",             action: .launchApp(bundleID: "com.apple.Safari")),
                 seg("Finder",    icon: "folder",             action: .launchApp(bundleID: "com.apple.finder")),
                 seg("Mail",      icon: "envelope",           action: .launchApp(bundleID: "com.apple.mail")),

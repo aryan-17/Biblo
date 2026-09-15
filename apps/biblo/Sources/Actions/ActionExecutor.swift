@@ -16,7 +16,7 @@ enum ActionExecutor {
                 configuration: NSWorkspace.OpenConfiguration()
             )
 
-        case .runShell(let command):
+        case .runShell(let command, _):
             let task = Process()
             task.executableURL = URL(fileURLWithPath: "/bin/zsh")
             task.arguments     = ["-lc", command]  // -l loads user profile

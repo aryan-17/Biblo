@@ -27,6 +27,7 @@ struct Segment: Codable {
     var type: SegmentType
     var stickyIndex: Int
     var actions: [BibloAction]
+    var dynamicCommand: String?  // if set, populated at wheel-open time; overrides actions
 }
 
 enum SegmentType: String, Codable {
@@ -39,7 +40,7 @@ enum SegmentType: String, Codable {
 
 enum BibloAction: Codable {
     case launchApp(bundleID: String)
-    case runShell(command: String)
+    case runShell(command: String, captureOutput: Bool)
     case runShortcut(name: String)
     case openURL(url: String)
     case sendKeystroke(keyCombo: String)
@@ -47,7 +48,7 @@ enum BibloAction: Codable {
     case openFile(path: String)
 
     private enum CodingKeys: String, CodingKey {
-        case type, bundleID, command, name, url, keyCombo, source, path
+        case type, bundleID, command, name, url, keyCombo, source, path, captureOutput
     }
 
     init(from decoder: Decoder) throws {
@@ -55,7 +56,10 @@ enum BibloAction: Codable {
         let type = try c.decode(String.self, forKey: .type)
         switch type {
         case "launchApp":   self = .launchApp(bundleID: try c.decode(String.self, forKey: .bundleID))
-        case "runShell":    self = .runShell(command: try c.decode(String.self, forKey: .command))
+        case "runShell":
+            let cmd     = try c.decode(String.self, forKey: .command)
+            let capture = (try? c.decode(Bool.self, forKey: .captureOutput)) ?? false
+            self = .runShell(command: cmd, captureOutput: capture)
         case "runShortcut": self = .runShortcut(name: try c.decode(String.self, forKey: .name))
         case "openURL":     self = .openURL(url: try c.decode(String.self, forKey: .url))
         case "sendKeystroke": self = .sendKeystroke(keyCombo: try c.decode(String.self, forKey: .keyCombo))
@@ -71,7 +75,10 @@ enum BibloAction: Codable {
         var c = encoder.container(keyedBy: CodingKeys.self)
         switch self {
         case .launchApp(let v):    try c.encode("launchApp", forKey: .type);    try c.encode(v, forKey: .bundleID)
-        case .runShell(let v):     try c.encode("runShell", forKey: .type);     try c.encode(v, forKey: .command)
+        case .runShell(let cmd, let capture):
+            try c.encode("runShell", forKey: .type)
+            try c.encode(cmd, forKey: .command)
+            if capture { try c.encode(true, forKey: .captureOutput) }
         case .runShortcut(let v):  try c.encode("runShortcut", forKey: .type);  try c.encode(v, forKey: .name)
         case .openURL(let v):      try c.encode("openURL", forKey: .type);      try c.encode(v, forKey: .url)
         case .sendKeystroke(let v):try c.encode("sendKeystroke", forKey: .type);try c.encode(v, forKey: .keyCombo)
@@ -84,7 +91,7 @@ enum BibloAction: Codable {
     var displayLabel: String {
         switch self {
         case .launchApp(let id):     return id.split(separator: ".").last.map(String.init) ?? id
-        case .runShell(let cmd):     return String(cmd.prefix(24))
+        case .runShell(let cmd, _):  return String(cmd.prefix(24))
         case .runShortcut(let name): return name
         case .openURL(let url):      return url
         case .sendKeystroke(let k):  return k
