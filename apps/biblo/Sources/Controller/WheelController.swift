@@ -145,12 +145,7 @@ final class WheelController {
             return
         }
 
-        bibloLog("keyUp — highlightedIndex=\(String(describing: state.highlightedIndex)) outerIdx=\(String(describing: state.outerSelectedIndex)) elapsed=\(String(format:"%.3f",elapsed))")
-
-        guard let idx = state.highlightedIndex else {
-            bibloLog("keyUp — dead zone, no action")
-            return
-        }
+        guard let idx = state.highlightedIndex else { return }  // dead zone = cancel
 
         let seg     = wheel.segments[idx]
         let outerIdx = state.outerSelectedIndex

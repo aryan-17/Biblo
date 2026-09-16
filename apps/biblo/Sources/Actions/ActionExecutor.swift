@@ -1,19 +1,6 @@
 import AppKit
 import Foundation
 
-func bibloLog(_ msg: String) {
-    let line = "\(Date()): \(msg)\n"
-    if let data = line.data(using: .utf8) {
-        let url = URL(fileURLWithPath: "/tmp/biblo_debug.log")
-        if let fh = try? FileHandle(forWritingTo: url) {
-            fh.seekToEndOfFile(); fh.write(data); try? fh.close()
-        } else {
-            try? data.write(to: url)
-        }
-    }
-    NSLog("Biblo: \(msg)")
-}
-
 enum ActionExecutor {
 
     static func execute(_ action: BibloAction) {
@@ -58,69 +45,32 @@ enum ActionExecutor {
             if let err = error { NSLog("Biblo: AppleScript error — \(err)") }
 
         case .runInTerminal(let command, let terminalBundleID):
-            bibloLog("execute runInTerminal — \(command)")
             openInTerminalTab(command: command, terminalBundleID: terminalBundleID)
         }
     }
 
     // ── Terminal tab opener ───────────────────────────────────────────────────
 
-    /// Activates terminal via NSWorkspace (no Automation permission),
-    /// then uses System Events only for new-tab + command (one-time dialog).
+    /// Opens a new Warp tab running `command`.
+    /// Writes a .command script and opens it with the terminal app.
+    /// No Automation or Accessibility permission required.
     private static func openInTerminalTab(command: String, terminalBundleID: String) {
-        bibloLog("openInTerminalTab — cmd=\(command) bundleID=\(terminalBundleID)")
-
-        let appName = NSWorkspace.shared.runningApplications
-            .first { $0.bundleIdentifier == terminalBundleID }?
-            .localizedName ?? TerminalApps.processName(for: terminalBundleID)
-
-        bibloLog("resolved appName=\(appName)")
-
-        let escaped = command
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "\"", with: "\\\"")
+        guard let warpURL = NSWorkspace.shared.urlForApplication(
+            withBundleIdentifier: terminalBundleID) else { return }
 
         DispatchQueue.global(qos: .userInitiated).async {
-            // Activate via NSWorkspace — no Automation permission needed
-            if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: terminalBundleID) {
-                bibloLog("opening app at \(appURL)")
-                NSWorkspace.shared.openApplication(
-                    at: appURL,
-                    configuration: NSWorkspace.OpenConfiguration()
-                )
-            } else {
-                bibloLog("app URL not found for bundleID \(terminalBundleID)")
-            }
+            // .command extension → Warp opens in a new tab and executes.
+            // -il: interactive login shell so aliases, PATH, and functions are loaded.
+            let tmp = URL(fileURLWithPath: "/tmp/biblo_\(Int(Date().timeIntervalSince1970)).command")
+            let content = "#!/bin/zsh -il\ntrap 'rm -f \(tmp.path)' EXIT\n\(command)\n"
+            try? content.write(to: tmp, atomically: true, encoding: .utf8)
+            try? FileManager.default.setAttributes(
+                [.posixPermissions: NSNumber(value: 0o755)], ofItemAtPath: tmp.path)
 
-            Thread.sleep(forTimeInterval: 0.5)
-
-            let script = """
-            tell application "System Events"
-                tell process "\(appName)"
-                    keystroke "t" using command down
-                    delay 0.25
-                    keystroke "\(escaped)"
-                    key code 36
-                end tell
-            end tell
-            """
-
-            bibloLog("running AppleScript for process \(appName)")
-            guard let appleScript = NSAppleScript(source: script) else { return }
-            var error: NSDictionary?
-            appleScript.executeAndReturnError(&error)
-            if let err = error {
-                bibloLog("runInTerminal error — \(err)")
-                let code = (err[NSAppleScript.errorNumber] as? Int) ?? 0
-                if code == -1743 {
-                    // Automation permission denied for System Events
-                    DispatchQueue.main.async {
-                        NSWorkspace.shared.open(
-                            URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation")!
-                        )
-                    }
-                }
-            } else { bibloLog("runInTerminal success") }
+            NSWorkspace.shared.open(
+                [tmp], withApplicationAt: warpURL,
+                configuration: NSWorkspace.OpenConfiguration()
+            )
         }
     }
 }
