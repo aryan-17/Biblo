@@ -83,22 +83,15 @@ enum ActionExecutor {
 
             if let err = error {
                 NSLog("Biblo: runInTerminal error — \(err)")
-                // Prompt for Accessibility and tell user to restart
+                guard !AXIsProcessTrusted() else {
+                    NSLog("Biblo: Accessibility granted but AppleScript still failed — check process name")
+                    return
+                }
+                // Not trusted: open System Settings silently (no alert spam)
                 DispatchQueue.main.async {
-                    let opts = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
-                    AXIsProcessTrustedWithOptions(opts as CFDictionary)
-
-                    let alert = NSAlert()
-                    alert.messageText     = "Accessibility Permission Required"
-                    alert.informativeText = "Enable Biblo in System Settings → Privacy & Security → Accessibility, then quit and relaunch Biblo."
-                    alert.alertStyle      = .warning
-                    alert.addButton(withTitle: "Open System Settings")
-                    alert.addButton(withTitle: "Dismiss")
-                    if alert.runModal() == .alertFirstButtonReturn {
-                        NSWorkspace.shared.open(
-                            URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
-                        )
-                    }
+                    NSWorkspace.shared.open(
+                        URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
+                    )
                 }
             }
         }
