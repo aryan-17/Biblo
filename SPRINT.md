@@ -1,42 +1,44 @@
 # Biblo — Engineer Edition Sprint
 
 Living backlog for engineer-focused features. Move items across columns as work progresses.
+Full feature spec: `FEATURES.md`
 
 ---
 
 ## Done
 
-- [x] **Terminal command launcher** — any terminal segment (Warp, iTerm2, Terminal.app etc.) shows a second outer ring with up to 2 configurable commands; selecting one opens a new tab running that command. No permissions required — uses a temp `.command` file opened via NSWorkspace. Commands configurable from Settings panel. Arrow keys (←/→) cycle outer ring; cursor in outer arc selects visually.
-- [x] **Outer command ring UI** — when a terminal segment is highlighted, an outer arc ring appears outside the primary wheel showing both commands simultaneously. Moving cursor outward selects one; haptic feedback on selection.
+- [x] **Terminal command launcher** — terminal segments (Warp, iTerm2, etc.) show an outer ring with up to 2 configurable commands; selecting one opens a new tab running that command. No permissions required — temp `.command` file via NSWorkspace. `zsh -il` so aliases and PATH work. Settings panel shows command text fields for terminal segments. Arrow keys (←/→) cycle outer ring.
+- [x] **Outer command ring UI** — second arc ring appears outside primary wheel when a terminal segment is highlighted. Both commands visible simultaneously. Cursor moves outward to select; haptic feedback on crossing.
 
 ---
 
 ## Up Next (E2)
 
-- [ ] **SSH host wheel** — parse `~/.ssh/config` at launch, auto-populate segment with hosts as level-2 actions; selecting one opens Terminal and SSHs in
-- [ ] **Per-app context wheels** — hotkey summons a different wheel per frontmost app
-  - Xcode: build (`⌘B`), test (`⌘U`), clean derived data, open simulator, run
-  - VS Code / Cursor: open integrated terminal, format document, git diff, toggle sidebar
-  - Terminal: switch tmux session (via `tmux ls` dynamic segment), `cd` to project roots
-- [ ] **Multi-step pipelines** — `"type": "pipeline", "steps": [...]`; runs steps in sequence with a progress indicator between steps; last step can be backgrounded
-- [ ] **Service health in live segment state** — `"healthURL": "http://localhost:3000/health"` on a segment; icon shows green/red dot based on HTTP reachability
-- [ ] **`{{selection}}` token** — resolves to selected text in frontmost app via AXUIElement; requires Accessibility permission (prompt only on first use, graceful fallback to empty string)
+- [ ] **`openProject` action type** — `BibloAction.openProject(path:appBundleID:)` opens a folder/workspace in the target editor via `NSWorkspace.open`. Settings shows project path pickers for editor segments (Cursor, VS Code, IntelliJ, Xcode). No permissions. See `FEATURES.md § Phase 2`.
+- [ ] **Editor segment detection** — add `EditorApps.swift` (same pattern as `TerminalApps.swift`); Settings auto-shows project path fields for known editors.
+- [ ] **Browser/comms URL actions** — browser and comms segments show 2 URL + label fields in Settings; reuses existing `openURL` action. No new action type needed.
+- [ ] **SSH host wheel** — parse `~/.ssh/config` at launch, auto-populate segment with hosts; selecting one opens terminal + SSHs in.
+- [ ] **Per-app context wheels** — different wheel per frontmost app (Xcode, VS Code, Finder). See `FEATURES.md` for app-specific ideas.
+- [ ] **Service health in live segment state** — `"healthURL"` on a segment; icon shows green/red dot based on HTTP reachability.
 
 ---
 
 ## Later (E3)
 
-- [ ] **Environment switcher** — action type that swaps a symlink or `.env` file + optionally restarts a named process; useful for dev/staging/prod toggling
-- [ ] **Process killer** — `"type": "killProcess", "name": "node"` kills all processes matching name; confirmation toast shows PID count
-- [ ] **More terminal commands** — currently max 2; raise limit when there's a use case
-- [ ] **`LABEL|COMMAND` format in dynamic output** — dynamic command lines parsed as `display label | shell command` so scripts can emit friendly names
+- [ ] **Settings UI per app-type** — `SegmentRow` detects app category (terminal/editor/browser/comms) and renders appropriate config fields instead of generic action list. See `FEATURES.md § Phase 3`.
+- [ ] **App icon in outer ring arcs** — show SF Symbol or path-derived icon in each outer arc. See `FEATURES.md § Phase 4`.
+- [ ] **Environment switcher** — swap symlink or `.env` file + optionally restart a process; dev/staging/prod toggling.
+- [ ] **Process killer** — `"type": "killProcess", "name": "node"` kills matching processes.
+- [ ] **More than 2 outer ring actions** — raise limit when there's a use case (currently max 2 per segment).
+- [ ] **Multi-step pipelines** — `"type": "pipeline", "steps": [...]` with progress indicator.
 
 ---
 
 ## Notes
 
-- Terminal segments detected by bundle ID against a known list (`TerminalApps.swift`). Add new terminals there.
-- Commands run in `zsh -il` (interactive login shell) — aliases, functions, and PATH from `.zshrc` all work.
-- Temp `.command` files auto-delete via `trap 'rm -f' EXIT` when the command finishes.
-- Outer ring appears at cursor radius > 160pt from wheel center. Move cursor ~2 inches outward to enter it.
-- Per-app wheels (E2) require deciding on config schema: separate `wheels.json` entries with `"appFilter": "com.apple.dt.Xcode"`, or a dedicated `context-wheels.json`.
+- **Terminal detection:** bundle ID checked against `TerminalApps.swift`. Add new terminals there.
+- **Editor detection (planned):** same pattern via `EditorApps.swift`.
+- **No permissions:** terminal launcher uses `.command` file + NSWorkspace — zero Automation/Accessibility required.
+- **Shell:** commands run in `zsh -il` (interactive login shell) — aliases, functions, PATH from `.zshrc` all load.
+- **Outer ring geometry:** appears at cursor radius > 160pt. User moves cursor ~2 inches outward to enter it.
+- **Hand-editing `wheels.json`:** any segment with `actions.count > 1` already shows the outer ring. Power users can add level-2 actions of any existing type without waiting for Settings UI support.
