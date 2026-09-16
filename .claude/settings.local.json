@@ -10,7 +10,12 @@
       "Bash(python3:*)",
       "Bash(osascript:*)",
       "Bash(swift:*)",
-      "Bash(sqlite3:*)"
+      "Bash(sqlite3:*)",
+      "Bash(log stream:*)",
+      "Bash(echo \"Log capture PID: $!\")",
+      "Bash(kill %%)",
+      "Read(//private/tmp/**)",
+      "Bash(log show:*)"
     ]
   }
 }
