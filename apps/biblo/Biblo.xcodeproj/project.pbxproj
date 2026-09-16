@@ -11,6 +11,7 @@
 		1D6D437B4248194EFA13B62D /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0FC43D93F541E11095E68A /* main.swift */; };
 		208608807D2D8EA0FE98509B /* AppIconCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 489B401200CDC52045FF9E0A /* AppIconCache.swift */; };
 		2CE18B010BF8128A822CCF76 /* ConfigLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C98692FC51F49DD5803B350F /* ConfigLoader.swift */; };
+		3B84CF586CB4922F4708A7E5 /* TerminalApps.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63DE36DA493166123794B872 /* TerminalApps.swift */; };
 		4E080DAA2E7B26979EB07895 /* WheelState.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7F014C8ED497705DED4D8BC /* WheelState.swift */; };
 		67F0E7351690739FCE8F2F70 /* WheelPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7103CC7D497117DF3A31ED /* WheelPanel.swift */; };
 		68D3ABCB1D9DFB48CCC3FDC7 /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5CA2403468CD3235A0D10CB /* HotkeyManager.swift */; };
@@ -31,6 +32,7 @@
 		489B401200CDC52045FF9E0A /* AppIconCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIconCache.swift; sourceTree = "<group>"; };
 		4E5D211A286CD3AD75C24D8B /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
 		52C859E0C1094C061B333C8E /* KeyMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyMapper.swift; sourceTree = "<group>"; };
+		63DE36DA493166123794B872 /* TerminalApps.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalApps.swift; sourceTree = "<group>"; };
 		8A0FC43D93F541E11095E68A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		8D7F3C4CB6E590C1F04AFF97 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A91C64CDF17CAEEEB7CD95C2 /* SettingsWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowController.swift; sourceTree = "<group>"; };
@@ -126,6 +128,7 @@
 				2689D3DB6E5C3EDF092DDF98 /* Hotkey */,
 				B4B4A32615F2D041AF0EA3D1 /* Models */,
 				917244D148B364C4D5A11A1A /* Settings */,
+				D60D5A3FDEA9622572DBF7CD /* Terminal */,
 				5A99FFAAB09117C8CDE12864 /* Views */,
 				76F053DCBDB328A4A89D73B5 /* Window */,
 				8D7F3C4CB6E590C1F04AFF97 /* AppDelegate.swift */,
@@ -166,6 +169,14 @@
 				A087FCC7E64A14AE641DDD5B /* Frameworks */,
 				7DF214E9EAB4DE87D7D172FC /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		D60D5A3FDEA9622572DBF7CD /* Terminal */ = {
+			isa = PBXGroup;
+			children = (
+				63DE36DA493166123794B872 /* TerminalApps.swift */,
+			);
+			path = Terminal;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -238,6 +249,7 @@
 				15BB3E3039C5AAA46B2850DD /* Models.swift in Sources */,
 				E78CB4FD3AE963C4E41159F5 /* SettingsView.swift in Sources */,
 				6DCE5E6276F51FE89BAA2562 /* SettingsWindowController.swift in Sources */,
+				3B84CF586CB4922F4708A7E5 /* TerminalApps.swift in Sources */,
 				81C67FCD8BE8F89D31CBF8B5 /* WheelController.swift in Sources */,
 				67F0E7351690739FCE8F2F70 /* WheelPanel.swift in Sources */,
 				4E080DAA2E7B26979EB07895 /* WheelState.swift in Sources */,

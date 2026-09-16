@@ -7,7 +7,4 @@ final class WheelState: ObservableObject {
     @Published var highlightedIndex: Int?          // nil = dead zone / hidden
     @Published var actionIndices: [Int: Int] = [:] // per-segment current action index
     @Published var wheelOrigin: CGPoint = .zero    // wheel centre in SwiftUI view coords
-    /// Populated at wheel-open time for segments with dynamicCommand.
-    /// Overrides the segment's static `actions` array for display and execution.
-    @Published var dynamicActions: [Int: [BibloAction]] = [:]
 }

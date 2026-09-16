@@ -3,103 +3,80 @@ import Foundation
 
 enum ActionExecutor {
 
-    /// Execute `action`, resolving {{tokens}} in all string arguments.
-    /// For `runShell(captureOutput: true)`: runs async; on completion writes
-    /// stdout to clipboard (if non-empty) and calls `onCapture(stdout)`.
-    /// For all other actions: synchronous fire-and-forget; `onCapture("")` called immediately.
-    static func execute(_ action: BibloAction, onCapture: ((String) -> Void)? = nil) {
+    static func execute(_ action: BibloAction) {
         switch action {
 
         case .launchApp(let bundleID):
             guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
                 NSLog("Biblo: app not found — \(bundleID)")
-                onCapture?("")
                 return
             }
-            NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
-            onCapture?("")
+            NSWorkspace.shared.openApplication(
+                at: url,
+                configuration: NSWorkspace.OpenConfiguration()
+            )
 
-        case .runShell(let command, let captureOutput):
-            let resolved = VariableResolver.resolve(command)
-            if captureOutput {
-                captureShell(resolved, onCapture: onCapture)
-            } else {
-                let task = Process()
-                task.executableURL = URL(fileURLWithPath: "/bin/zsh")
-                task.arguments     = ["-lc", resolved]
-                try? task.run()
-                onCapture?("")
-            }
-
-        case .runShortcut(let name):
-            let resolved = VariableResolver.resolve(name)
-            let task = Process()
-            task.executableURL = URL(fileURLWithPath: "/usr/bin/shortcuts")
-            task.arguments     = ["run", resolved]
-            try? task.run()
-            onCapture?("")
-
-        case .openURL(let urlString):
-            let resolved = VariableResolver.resolve(urlString)
-            guard let url = URL(string: resolved) else {
-                NSLog("Biblo: invalid URL — \(resolved)")
-                onCapture?("")
-                return
-            }
-            NSWorkspace.shared.open(url)
-            onCapture?("")
-
-        case .openFile(let path):
-            let resolved = VariableResolver.resolve(path)
-            NSWorkspace.shared.open(URL(fileURLWithPath: resolved))
-            onCapture?("")
-
-        case .sendKeystroke(let combo):
-            NSLog("Biblo: sendKeystroke not yet implemented — \(combo)")
-            onCapture?("")
-
-        case .runAppleScript(let source):
-            let resolved = VariableResolver.resolve(source)
-            guard let script = NSAppleScript(source: resolved) else {
-                onCapture?("")
-                return
-            }
-            var error: NSDictionary?
-            script.executeAndReturnError(&error)
-            if let err = error { NSLog("Biblo: AppleScript error — \(err)") }
-            onCapture?("")
-        }
-    }
-
-    // ── Private ───────────────────────────────────────────────────────────────
-
-    /// Runs `command` in /bin/zsh, captures stdout, writes to clipboard, calls completion on main.
-    private static func captureShell(_ command: String, onCapture: ((String) -> Void)?) {
-        DispatchQueue.global(qos: .userInitiated).async {
+        case .runShell(let command):
             let task = Process()
             task.executableURL = URL(fileURLWithPath: "/bin/zsh")
             task.arguments     = ["-lc", command]
-            let outPipe = Pipe()
-            task.standardOutput = outPipe
-            task.standardError  = Pipe()   // discard stderr
+            try? task.run()
 
-            guard (try? task.run()) != nil else {
-                DispatchQueue.main.async { onCapture?("") }
-                return
-            }
-            task.waitUntilExit()
+        case .runShortcut(let name):
+            let task = Process()
+            task.executableURL = URL(fileURLWithPath: "/usr/bin/shortcuts")
+            task.arguments     = ["run", name]
+            try? task.run()
 
-            let data   = outPipe.fileHandleForReading.readDataToEndOfFile()
-            let output = String(data: data, encoding: .utf8)?
-                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        case .openURL(let urlString):
+            guard let url = URL(string: urlString) else { return }
+            NSWorkspace.shared.open(url)
 
-            DispatchQueue.main.async {
-                if !output.isEmpty {
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(output, forType: .string)
-                }
-                onCapture?(output)
-            }
+        case .openFile(let path):
+            NSWorkspace.shared.open(URL(fileURLWithPath: path))
+
+        case .sendKeystroke(let combo):
+            NSLog("Biblo: sendKeystroke not yet implemented — \(combo)")
+
+        case .runAppleScript(let source):
+            guard let script = NSAppleScript(source: source) else { return }
+            var error: NSDictionary?
+            script.executeAndReturnError(&error)
+            if let err = error { NSLog("Biblo: AppleScript error — \(err)") }
+
+        case .runInTerminal(let command, let terminalBundleID):
+            openInTerminalTab(command: command, terminalBundleID: terminalBundleID)
+        }
+    }
+
+    // ── Terminal tab opener ───────────────────────────────────────────────────
+
+    /// Opens a new tab in the target terminal app and runs `command`.
+    /// Uses System Events (requires Accessibility permission).
+    private static func openInTerminalTab(command: String, terminalBundleID: String) {
+        let processName = TerminalApps.processName(for: terminalBundleID)
+        let escaped = command
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+
+        let script = """
+        tell application "\(processName)" to activate
+        delay 0.35
+        tell application "System Events"
+            tell process "\(processName)"
+                keystroke "t" using command down
+                delay 0.2
+                keystroke "\(escaped)"
+                key code 36
+            end tell
+        end tell
+        """
+
+        DispatchQueue.global(qos: .userInitiated).async {
+            guard let appleScript = NSAppleScript(source: script) else { return }
+            var error: NSDictionary?
+            appleScript.executeAndReturnError(&error)
+            if let err = error { NSLog("Biblo: runInTerminal error — \(err)") }
         }
     }
 }

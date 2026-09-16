@@ -20,7 +20,6 @@ final class WheelController {
     // ── Windows (created once, reused) ────────────────────────────────────────
     private let panel    = WheelPanel()
     private let backdrop = BackdropWindow()
-    private let toast    = ToastWindow()
 
     // ── Event monitors (non-nil only while wheel is open) ────────────────────
     private var mouseMonitor:  Any?
@@ -41,7 +40,6 @@ final class WheelController {
     // ── Screen where cursor was on keydown ────────────────────────────────────
     private var activeScreen: NSScreen?
 
-    // ─────────────────────────────────────────────────────────────────────────
     // ─────────────────────────────────────────────────────────────────────────
     // MARK: Public API
     // ─────────────────────────────────────────────────────────────────────────
@@ -89,11 +87,11 @@ final class WheelController {
             }
             .store(in: &cancellables)
 
-        // Register hotkey — F13 by default
+        // Register hotkey
         hotkeyMgr.onKeyDown = { [weak self] in self?.handleKeyDown() }
         hotkeyMgr.onKeyUp   = { [weak self] in self?.handleKeyUp()   }
 
-        let keyCode   = KeyMapper.keyCode(for: wheel.hotkey.key) ?? 49   // fallback: Space
+        let keyCode   = KeyMapper.keyCode(for: wheel.hotkey.key) ?? 49
         let modifiers = KeyMapper.modifiers(from: wheel.hotkey.modifiers)
         hotkeyMgr.register(keyCode: keyCode, modifiers: modifiers)
     }
@@ -106,26 +104,16 @@ final class WheelController {
         keyDownDate = Date()
         let cursor = NSEvent.mouseLocation
 
-        // Determine screen
         activeScreen = NSScreen.screens.first { $0.frame.contains(cursor) } ?? NSScreen.main
 
         guard let screen = activeScreen else { return }
 
-        // Cover that screen
         panel.setFrame(screen.frame,    display: false)
         backdrop.setFrame(screen.frame, display: false)
 
-        // Wheel origin in SwiftUI view coordinates (y-down, origin top-left of screen)
         state.wheelOrigin = toViewCoord(cursor, screen: screen)
         state.highlightedIndex = nil
-        state.dynamicActions = [:]   // clear stale results from last open
 
-        // Populate dynamic segments before showing — blocks briefly for fast commands
-        populateDynamicSegments()
-
-        // Show backdrop first (lower z-order), then panel.
-        // makeKeyAndOrderFront lets panel receive keyboard events without
-        // activating the app (nonactivatingPanel keeps frontmost app unchanged).
         backdrop.orderFront(nil)
         panel.makeKeyAndOrderFront(nil)
 
@@ -143,28 +131,26 @@ final class WheelController {
         if elapsed < tapThreshold {
             // Tap: repeat last action
             if let last = lastFired {
-                let actions = effectiveActions(for: last.segmentIdx)
-                guard !actions.isEmpty else { return }
-                let action = actions[min(last.actionIdx, actions.count - 1)]
-                fireAction(action)
+                let seg = wheel.segments[last.segmentIdx]
+                guard !seg.actions.isEmpty else { return }
+                let action = seg.actions[min(last.actionIdx, seg.actions.count - 1)]
+                ActionExecutor.execute(action)
             }
             return
         }
 
         guard let idx = state.highlightedIndex else { return }  // dead zone = cancel
 
-        let actions = effectiveActions(for: idx)
-        guard !actions.isEmpty else { return }
-        let actionIdx = min(stickyIndices[idx] ?? 0, actions.count - 1)
-        let action = actions[actionIdx]
+        let seg = wheel.segments[idx]
+        guard !seg.actions.isEmpty else { return }
+        let actionIdx = min(stickyIndices[idx] ?? 0, seg.actions.count - 1)
+        let action = seg.actions[actionIdx]
 
-        // Update sticky
         stickyIndices[idx] = actionIdx
         lastFired = (idx, actionIdx)
 
-        fireAction(action)
+        ActionExecutor.execute(action)
 
-        // Reset highlight
         state.highlightedIndex = nil
     }
 
@@ -173,32 +159,28 @@ final class WheelController {
     // ─────────────────────────────────────────────────────────────────────────
 
     private func startTracking() {
-        stopTracking()  // idempotent; guards against duplicate hotkey press events
-        // Mouse movement
+        stopTracking()
         mouseMonitor = NSEvent.addGlobalMonitorForEvents(
             matching: [.mouseMoved, .leftMouseDragged]
         ) { [weak self] _ in
             self?.updateFromCursor()
         }
 
-        // Scroll wheel — cycle actions within highlighted level-2 segment
         scrollMonitor = NSEvent.addGlobalMonitorForEvents(matching: .scrollWheel) { [weak self] event in
             self?.handleScroll(delta: event.scrollingDeltaY)
         }
 
-        // Key-down: step through center on each press.
-        // Held arrow keys let diagonals be selected; each press steps one position.
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self = self else { return event }
             switch event.keyCode {
-            case 123, 124, 125, 126:              // arrow keys
+            case 123, 124, 125, 126:
                 self.pressedArrows.insert(event.keyCode)
                 self.stepTowardPressedDirection()
                 return nil
-            case 53:                              // Esc → cancel and close immediately
+            case 53:
                 self.cancelAndClose()
                 return nil
-            case 36, 76:                          // Return / numpad Enter
+            case 36, 76:
                 if self.state.highlightedIndex == nil {
                     self.cancelAndClose()
                 } else {
@@ -214,7 +196,6 @@ final class WheelController {
             }
         }
 
-        // Key-up: remove from set, no selection change (selection sticks on key release).
         keyUpMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyUp) { [weak self] event in
             guard let self = self else { return event }
             if [123, 124, 125, 126].contains(event.keyCode) {
@@ -224,7 +205,6 @@ final class WheelController {
             return event
         }
 
-        // Seed immediately so the first frame is correct
         updateFromCursor()
     }
 
@@ -249,7 +229,7 @@ final class WheelController {
         let origin  = state.wheelOrigin
 
         let dx = viewPos.x - origin.x
-        let dy = viewPos.y - origin.y   // both y-down; dy+ = down on screen
+        let dy = viewPos.y - origin.y
         let dist = sqrt(dx * dx + dy * dy)
 
         guard dist > 40 else {
@@ -257,39 +237,28 @@ final class WheelController {
             return
         }
 
-        // atan2(dx, -dy): angle from "up" direction, clockwise in y-down coords.
-        // 0° = top, 90° = right, 180° = bottom, 270° = left.
         var deg = atan2(dx, -dy) * 180 / .pi
         if deg < 0 { deg += 360 }
 
         let n = wheel.segments.count
         let segDeg = 360.0 / Double(n)
-        // Shift by half a segment so segment 0 is centred at 0° (12 o'clock).
         let idx = Int((deg + segDeg / 2).truncatingRemainder(dividingBy: 360) / segDeg) % n
         state.highlightedIndex = idx
     }
 
     private func handleScroll(delta: CGFloat) {
         guard let idx = state.highlightedIndex else { return }
-        let actions = effectiveActions(for: idx)
-        guard actions.count > 1 else { return }
+        let seg = wheel.segments[idx]
+        guard seg.actions.count > 1 else { return }
 
         var cur = stickyIndices[idx] ?? 0
         cur = delta < 0
-            ? (cur + 1) % actions.count
-            : (cur - 1 + actions.count) % actions.count
+            ? (cur + 1) % seg.actions.count
+            : (cur - 1 + seg.actions.count) % seg.actions.count
         stickyIndices[idx] = cur
         state.actionIndices = stickyIndices
     }
 
-    /// On each arrow key press, step one position along the axis toward the pressed direction.
-    /// Passes through center (nil) when moving from the exact opposite segment.
-    ///
-    /// Axes (segment ↔ center ↔ opposite):
-    ///   0 ↔ center ↔ 4  (↑ / ↓)
-    ///   1 ↔ center ↔ 5  (↑→ / ↓←)
-    ///   2 ↔ center ↔ 6  (→ / ←)
-    ///   3 ↔ center ↔ 7  (↓→ / ↑←)
     private func stepTowardPressedDirection() {
         let up    = pressedArrows.contains(126)
         let right = pressedArrows.contains(124)
@@ -306,30 +275,18 @@ final class WheelController {
         case (false, false, true,  true):  target = 5
         case (false, false, false, true):  target = 6
         case (true,  false, false, true):  target = 7
-        default: return  // no keys or opposing pair — ignore
+        default: return
         }
 
         let opposite = (target + 4) % 8
 
         if state.highlightedIndex == opposite {
-            state.highlightedIndex = nil    // step through center
+            state.highlightedIndex = nil
         } else {
-            state.highlightedIndex = target // at center or elsewhere → jump to target
+            state.highlightedIndex = target
         }
     }
 
-    /// Executes `action` and shows a toast if it captured output to clipboard.
-    private func fireAction(_ action: BibloAction) {
-        ActionExecutor.execute(action) { [weak self] output in
-            guard !output.isEmpty else { return }
-            self?.toast.show(
-                message: "Copied \(output.count) char\(output.count == 1 ? "" : "s")",
-                on: self?.activeScreen
-            )
-        }
-    }
-
-    /// Cancel with no action and close the wheel immediately.
     private func cancelAndClose() {
         keyDownDate = nil
         pressedArrows.removeAll()
@@ -339,12 +296,11 @@ final class WheelController {
         state.highlightedIndex = nil
     }
 
-    /// Fire the currently highlighted segment's action and dismiss the wheel.
     private func fireCurrentSegment() {
         guard let idx = state.highlightedIndex else { return }
-        let actions = effectiveActions(for: idx)
-        guard !actions.isEmpty else { return }
-        let actionIdx = min(stickyIndices[idx] ?? 0, actions.count - 1)
+        let seg = wheel.segments[idx]
+        guard !seg.actions.isEmpty else { return }
+        let actionIdx = min(stickyIndices[idx] ?? 0, seg.actions.count - 1)
 
         stickyIndices[idx] = actionIdx
         lastFired = (idx, actionIdx)
@@ -355,88 +311,17 @@ final class WheelController {
         backdrop.orderOut(nil)
         state.highlightedIndex = nil
 
-        fireAction(actions[actionIdx])
+        ActionExecutor.execute(seg.actions[actionIdx])
     }
 
     // ─────────────────────────────────────────────────────────────────────────
     // MARK: Coordinate conversion
     // ─────────────────────────────────────────────────────────────────────────
 
-    /// Converts an AppKit screen point (y-up, origin bottom-left of screen)
-    /// to SwiftUI view coordinates (y-down, origin top-left of screen).
     private func toViewCoord(_ screenPoint: NSPoint, screen: NSScreen) -> CGPoint {
         CGPoint(
             x: screenPoint.x - screen.frame.origin.x,
             y: screen.frame.height - (screenPoint.y - screen.frame.origin.y)
         )
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // MARK: Dynamic segments
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /// Returns populated dynamic actions for `segmentIndex` if available,
-    /// falling back to the segment's static actions array.
-    private func effectiveActions(for segmentIndex: Int) -> [BibloAction] {
-        state.dynamicActions[segmentIndex] ?? wheel.segments[segmentIndex].actions
-    }
-
-    /// For each segment with a dynamicCommand, runs that command in parallel
-    /// (1-second timeout per command) and stores results in state.dynamicActions.
-    /// Blocks the calling thread — call before showing the wheel.
-    private func populateDynamicSegments() {
-        let indexed = wheel.segments.enumerated().filter { $0.element.dynamicCommand != nil }
-        guard !indexed.isEmpty else { return }
-
-        let group = DispatchGroup()
-        var results: [Int: [BibloAction]] = [:]
-        let lock = NSLock()
-
-        for (i, seg) in indexed {
-            guard let raw = seg.dynamicCommand, !raw.isEmpty else { continue }
-            let cmd = VariableResolver.resolve(raw)
-            group.enter()
-            DispatchQueue.global(qos: .userInitiated).async {
-                let actions = self.runDynamicCommand(cmd)
-                lock.lock()
-                results[i] = actions
-                lock.unlock()
-                group.leave()
-            }
-        }
-
-        // Wait up to 1 second total (per-command timeout is inside runDynamicCommand)
-        _ = group.wait(timeout: .now() + 1.0)
-        state.dynamicActions = results
-    }
-
-    /// Executes `command` via /bin/zsh -lc with a 1-second timeout.
-    /// Each non-empty output line becomes a runShell action.
-    /// Returns at most 8 actions (wheel segment limit).
-    private func runDynamicCommand(_ command: String) -> [BibloAction] {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/bin/zsh")
-        task.arguments     = ["-lc", command]
-        let pipe = Pipe()
-        task.standardOutput = pipe
-        task.standardError  = Pipe()  // discard stderr
-
-        guard (try? task.run()) != nil else { return [] }
-
-        // Poll with 1-second deadline
-        let deadline = Date().addingTimeInterval(1.0)
-        while task.isRunning && Date() < deadline {
-            Thread.sleep(forTimeInterval: 0.01)
-        }
-        if task.isRunning { task.terminate() }
-
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        guard let output = String(data: data, encoding: .utf8) else { return [] }
-
-        // ponytail: LABEL|CMD format deferred — add when first user requests custom display labels
-        return output
-            .split(separator: "\n", omittingEmptySubsequences: true)
-            .prefix(8)
-            .map { BibloAction.runShell(command: String($0), captureOutput: false) }
     }
 }

@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git -C /Users/ctme/Documents/projects/biblo log --oneline -10)"
+      "Bash(git -C /Users/ctme/Documents/projects/biblo log --oneline -10)",
+      "Bash(git:*)",
+      "Bash(pkill -x Biblo)",
+      "Bash(mkdir -p ~/.config/biblo)",
+      "Read(//Users/ctme/.config/biblo/**)"
     ]
   }
 }
