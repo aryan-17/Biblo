@@ -25,6 +25,7 @@ targets:
         SWIFT_VERSION: "5.9"
         MACOSX_DEPLOYMENT_TARGET: "13.0"
         INFOPLIST_FILE: Resources/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Resources/Biblo.entitlements
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: ""
         PRODUCT_NAME: Biblo

@@ -15,7 +15,8 @@
       "Bash(echo \"Log capture PID: $!\")",
       "Bash(kill %%)",
       "Read(//private/tmp/**)",
-      "Bash(log show:*)"
+      "Bash(log show:*)",
+      "Bash(tccutil reset:*)"
     ]
   }
 }
