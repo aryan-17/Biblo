@@ -52,18 +52,30 @@ enum ActionExecutor {
     // ── Terminal tab opener ───────────────────────────────────────────────────
 
     /// Opens a new tab in the target terminal app and runs `command`.
-    /// Uses System Events (requires Accessibility permission).
+    /// Prompts for Accessibility permission if not already granted.
     private static func openInTerminalTab(command: String, terminalBundleID: String) {
-        let processName = TerminalApps.processName(for: terminalBundleID)
+        // Check Accessibility — prompt if missing, then bail (user retries after grant)
+        guard AXIsProcessTrusted() else {
+            let opts = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
+            AXIsProcessTrustedWithOptions(opts as CFDictionary)
+            NSLog("Biblo: Accessibility not granted — prompted user")
+            return
+        }
+
+        // Use localizedName from running instance (most reliable for System Events)
+        let appName = NSWorkspace.shared.runningApplications
+            .first { $0.bundleIdentifier == terminalBundleID }?
+            .localizedName ?? TerminalApps.processName(for: terminalBundleID)
+
         let escaped = command
             .replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "\"", with: "\\\"")
 
         let script = """
-        tell application "\(processName)" to activate
+        tell application "\(appName)" to activate
         delay 0.35
         tell application "System Events"
-            tell process "\(processName)"
+            tell process "\(appName)"
                 keystroke "t" using command down
                 delay 0.2
                 keystroke "\(escaped)"

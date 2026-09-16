@@ -204,6 +204,21 @@ final class WheelController {
             switch event.keyCode {
             case 123, 124, 125, 126:
                 self.pressedArrows.insert(event.keyCode)
+                // Left/right cycle outer ring when a terminal segment is highlighted
+                if [123, 124].contains(event.keyCode),
+                   let innerIdx = self.state.highlightedIndex {
+                    let subCount = self.wheel.segments[innerIdx].actions.filter {
+                        if case .runInTerminal = $0 { return true }
+                        return false
+                    }.count
+                    if subCount > 0 {
+                        let cur = self.state.outerSelectedIndex ?? 0
+                        self.state.outerSelectedIndex = event.keyCode == 124
+                            ? (cur + 1) % subCount          // right → next
+                            : (cur - 1 + subCount) % subCount  // left → prev
+                        return nil
+                    }
+                }
                 self.stepTowardPressedDirection()
                 return nil
             case 53:
@@ -358,12 +373,8 @@ final class WheelController {
 
     private func fireCurrentSegment() {
         guard let idx = state.highlightedIndex else { return }
-        let seg = wheel.segments[idx]
-        guard !seg.actions.isEmpty else { return }
-        let actionIdx = min(stickyIndices[idx] ?? 0, seg.actions.count - 1)
-
-        stickyIndices[idx] = actionIdx
-        lastFired = (idx, actionIdx)
+        let seg      = wheel.segments[idx]
+        let outerIdx = state.outerSelectedIndex
 
         keyDownDate = nil
         stopTracking()
@@ -372,6 +383,21 @@ final class WheelController {
         state.highlightedIndex   = nil
         state.outerSelectedIndex = nil
 
+        // Outer ring selected via arrow keys → fire sub-command
+        if let j = outerIdx {
+            let subCmds = seg.actions.filter {
+                if case .runInTerminal = $0 { return true }
+                return false
+            }
+            guard j < subCmds.count else { return }
+            ActionExecutor.execute(subCmds[j])
+            return
+        }
+
+        guard !seg.actions.isEmpty else { return }
+        let actionIdx = min(stickyIndices[idx] ?? 0, seg.actions.count - 1)
+        stickyIndices[idx] = actionIdx
+        lastFired = (idx, actionIdx)
         ActionExecutor.execute(seg.actions[actionIdx])
     }
 
