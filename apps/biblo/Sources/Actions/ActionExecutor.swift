@@ -83,16 +83,6 @@ enum ActionExecutor {
 
             if let err = error {
                 NSLog("Biblo: runInTerminal error — \(err)")
-                guard !AXIsProcessTrusted() else {
-                    NSLog("Biblo: Accessibility granted but AppleScript still failed — check process name")
-                    return
-                }
-                // Not trusted: open System Settings silently (no alert spam)
-                DispatchQueue.main.async {
-                    NSWorkspace.shared.open(
-                        URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
-                    )
-                }
             }
         }
     }
