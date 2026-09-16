@@ -6,9 +6,8 @@ Living backlog for engineer-focused features. Move items across columns as work 
 
 ## Done
 
-- [x] **Dynamic segments** — `"dynamicCommand"` on any segment runs a shell command at wheel-open time; each output line becomes a `runShell` action (parallel, 1s timeout)
-- [x] **Variable substitution** — `{{clipboard}}`, `{{frontapp.bundle}}`, `{{date}}`, `{{time}}` resolved in any command/URL/path at execution time
-- [x] **Shell output capture** — `"captureOutput": true` on `runShell` captures stdout → clipboard + ToastWindow confirmation
+- [x] **Terminal command launcher** — any terminal segment (Warp, iTerm2, Terminal.app etc.) shows a second outer ring with up to 2 configurable commands; selecting one opens a new tab running that command. No permissions required — uses a temp `.command` file opened via NSWorkspace. Commands configurable from Settings panel. Arrow keys (←/→) cycle outer ring; cursor in outer arc selects visually.
+- [x] **Outer command ring UI** — when a terminal segment is highlighted, an outer arc ring appears outside the primary wheel showing both commands simultaneously. Moving cursor outward selects one; haptic feedback on selection.
 
 ---
 
@@ -29,14 +28,15 @@ Living backlog for engineer-focused features. Move items across columns as work 
 
 - [ ] **Environment switcher** — action type that swaps a symlink or `.env` file + optionally restarts a named process; useful for dev/staging/prod toggling
 - [ ] **Process killer** — `"type": "killProcess", "name": "node"` kills all processes matching name; confirmation toast shows PID count
-- [ ] **`LABEL|COMMAND` format in dynamic output** — dynamic command lines parsed as `display label | shell command` so scripts can emit friendly names without encoding them in the command string
-- [ ] **`{{item}}` token for dynamic segments** — selected item text from a dynamic segment passed into a template command; enables `git checkout {{item}}` pattern without writing the checkout into the dynamic script
+- [ ] **More terminal commands** — currently max 2; raise limit when there's a use case
+- [ ] **`LABEL|COMMAND` format in dynamic output** — dynamic command lines parsed as `display label | shell command` so scripts can emit friendly names
 
 ---
 
 ## Notes
 
-- `dynamicCommand` output cap: 8 lines (wheel max). Use `head -8` in scripts.
-- `{{frontapp.bundle}}` resolves correctly at execution time — `.nonactivatingPanel` keeps the user's app frontmost while the wheel is open.
-- `captureOutput` runs async; the wheel closes before capture completes, so the toast appears ~100–500ms after dismissal.
+- Terminal segments detected by bundle ID against a known list (`TerminalApps.swift`). Add new terminals there.
+- Commands run in `zsh -il` (interactive login shell) — aliases, functions, and PATH from `.zshrc` all work.
+- Temp `.command` files auto-delete via `trap 'rm -f' EXIT` when the command finishes.
+- Outer ring appears at cursor radius > 160pt from wheel center. Move cursor ~2 inches outward to enter it.
 - Per-app wheels (E2) require deciding on config schema: separate `wheels.json` entries with `"appFilter": "com.apple.dt.Xcode"`, or a dedicated `context-wheels.json`.
