@@ -52,17 +52,9 @@ enum ActionExecutor {
     // ── Terminal tab opener ───────────────────────────────────────────────────
 
     /// Opens a new tab in the target terminal app and runs `command`.
-    /// Prompts for Accessibility permission if not already granted.
+    /// Requires Accessibility permission (System Events keystroke).
+    /// On failure: prompts for permission and shows restart alert.
     private static func openInTerminalTab(command: String, terminalBundleID: String) {
-        // Check Accessibility — prompt if missing, then bail (user retries after grant)
-        guard AXIsProcessTrusted() else {
-            let opts = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
-            AXIsProcessTrustedWithOptions(opts as CFDictionary)
-            NSLog("Biblo: Accessibility not granted — prompted user")
-            return
-        }
-
-        // Use localizedName from running instance (most reliable for System Events)
         let appName = NSWorkspace.shared.runningApplications
             .first { $0.bundleIdentifier == terminalBundleID }?
             .localizedName ?? TerminalApps.processName(for: terminalBundleID)
@@ -88,7 +80,27 @@ enum ActionExecutor {
             guard let appleScript = NSAppleScript(source: script) else { return }
             var error: NSDictionary?
             appleScript.executeAndReturnError(&error)
-            if let err = error { NSLog("Biblo: runInTerminal error — \(err)") }
+
+            if let err = error {
+                NSLog("Biblo: runInTerminal error — \(err)")
+                // Prompt for Accessibility and tell user to restart
+                DispatchQueue.main.async {
+                    let opts = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
+                    AXIsProcessTrustedWithOptions(opts as CFDictionary)
+
+                    let alert = NSAlert()
+                    alert.messageText     = "Accessibility Permission Required"
+                    alert.informativeText = "Enable Biblo in System Settings → Privacy & Security → Accessibility, then quit and relaunch Biblo."
+                    alert.alertStyle      = .warning
+                    alert.addButton(withTitle: "Open System Settings")
+                    alert.addButton(withTitle: "Dismiss")
+                    if alert.runModal() == .alertFirstButtonReturn {
+                        NSWorkspace.shared.open(
+                            URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
+                        )
+                    }
+                }
+            }
         }
     }
 }
