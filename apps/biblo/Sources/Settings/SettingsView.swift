@@ -174,8 +174,10 @@ private struct SegmentRow: View {
         var actions: [BibloAction] = [.launchApp(bundleID: tid)]
         if !cmd1.isEmpty { actions.append(.runInTerminal(command: cmd1, terminalBundleID: tid)) }
         if !cmd2.isEmpty { actions.append(.runInTerminal(command: cmd2, terminalBundleID: tid)) }
-        segment.actions = actions
-        segment.type    = actions.count > 1 ? .appWithActions : .actionOnly
+        segment.actions     = actions
+        segment.type        = actions.count > 1 ? .appWithActions : .actionOnly
+        // Start on first command so it's immediately visible in the wheel
+        segment.stickyIndex = actions.count > 1 ? 1 : 0
     }
 
     // ── Body ──────────────────────────────────────────────────────────────────

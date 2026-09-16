@@ -92,7 +92,7 @@ enum BibloAction: Codable {
     /// Short display string for sub-label in level-2 segments
     var displayLabel: String {
         switch self {
-        case .launchApp(let id):          return id.split(separator: ".").last.map(String.init) ?? id
+        case .launchApp:                   return "Launch"
         case .runShell(let cmd):          return String(cmd.prefix(24))
         case .runShortcut(let name):      return name
         case .openURL(let url):           return url

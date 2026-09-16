@@ -76,14 +76,20 @@ final class WheelController {
         hostingView.autoresizingMask = [.width, .height]
         panel.contentView = hostingView
 
-        // Haptic feedback on every segment change (including center)
+        // Haptic feedback on segment change and outer ring selection change
         state.$highlightedIndex
             .dropFirst()
             .removeDuplicates()
             .sink { _ in
-                NSHapticFeedbackManager.defaultPerformer.perform(
-                    .generic, performanceTime: .default
-                )
+                NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .default)
+            }
+            .store(in: &cancellables)
+
+        state.$outerSelectedIndex
+            .dropFirst()
+            .removeDuplicates()
+            .sink { _ in
+                NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .default)
             }
             .store(in: &cancellables)
 
@@ -141,17 +147,40 @@ final class WheelController {
 
         guard let idx = state.highlightedIndex else { return }  // dead zone = cancel
 
-        let seg = wheel.segments[idx]
+        let seg     = wheel.segments[idx]
+        let outerIdx = state.outerSelectedIndex
+
+        state.highlightedIndex   = nil
+        state.outerSelectedIndex = nil
+
+        // Outer ring selected → fire that sub-command
+        if let j = outerIdx {
+            let subCmds = seg.actions.filter {
+                if case .runInTerminal = $0 { return true }
+                return false
+            }
+            guard j < subCmds.count else { return }
+            let action = subCmds[j]
+            if let ai = seg.actions.firstIndex(where: {
+                if case .runInTerminal(let c1, _) = $0,
+                   case .runInTerminal(let c2, _) = action,
+                   c1 == c2 { return true }
+                return false
+            }) {
+                stickyIndices[idx] = ai
+                lastFired = (idx, ai)
+            }
+            ActionExecutor.execute(action)
+            return
+        }
+
+        // Inner ring — normal action
         guard !seg.actions.isEmpty else { return }
         let actionIdx = min(stickyIndices[idx] ?? 0, seg.actions.count - 1)
-        let action = seg.actions[actionIdx]
-
+        let action    = seg.actions[actionIdx]
         stickyIndices[idx] = actionIdx
         lastFired = (idx, actionIdx)
-
         ActionExecutor.execute(action)
-
-        state.highlightedIndex = nil
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -234,16 +263,46 @@ final class WheelController {
 
         guard dist > 40 else {
             state.highlightedIndex = nil
+            state.outerSelectedIndex = nil
             return
         }
 
         var deg = atan2(dx, -dy) * 180 / .pi
         if deg < 0 { deg += 360 }
 
-        let n = wheel.segments.count
+        let n      = wheel.segments.count
         let segDeg = 360.0 / Double(n)
-        let idx = Int((deg + segDeg / 2).truncatingRemainder(dividingBy: 360) / segDeg) % n
-        state.highlightedIndex = idx
+        let idx    = Int((deg + segDeg / 2).truncatingRemainder(dividingBy: 360) / segDeg) % n
+
+        if dist > 160 {
+            // Outer ring — freeze inner at current or computed segment
+            let innerIdx = state.highlightedIndex ?? idx
+            state.highlightedIndex = innerIdx
+
+            let seg = wheel.segments[innerIdx]
+            let subCount = seg.actions.filter {
+                if case .runInTerminal = $0 { return true }
+                return false
+            }.count
+
+            guard subCount > 0 else { state.outerSelectedIndex = nil; return }
+
+            // Check angle falls within the frozen segment's arc
+            let segCentre = Double(innerIdx) * segDeg
+            var relDeg = (deg - segCentre + 360).truncatingRemainder(dividingBy: 360)
+            if relDeg > 180 { relDeg -= 360 }
+
+            if abs(relDeg) <= segDeg / 2 {
+                let normalized = (relDeg + segDeg / 2) / segDeg  // 0…1 within arc
+                state.outerSelectedIndex = min(Int(normalized * Double(subCount)), subCount - 1)
+            } else {
+                state.outerSelectedIndex = nil
+            }
+        } else {
+            // Inner ring — normal selection
+            state.outerSelectedIndex = nil
+            state.highlightedIndex   = idx
+        }
     }
 
     private func handleScroll(delta: CGFloat) {
@@ -293,7 +352,8 @@ final class WheelController {
         stopTracking()
         panel.orderOut(nil)
         backdrop.orderOut(nil)
-        state.highlightedIndex = nil
+        state.highlightedIndex   = nil
+        state.outerSelectedIndex = nil
     }
 
     private func fireCurrentSegment() {
@@ -309,7 +369,8 @@ final class WheelController {
         stopTracking()
         panel.orderOut(nil)
         backdrop.orderOut(nil)
-        state.highlightedIndex = nil
+        state.highlightedIndex   = nil
+        state.outerSelectedIndex = nil
 
         ActionExecutor.execute(seg.actions[actionIdx])
     }
