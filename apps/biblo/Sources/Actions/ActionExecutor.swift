@@ -51,9 +51,8 @@ enum ActionExecutor {
 
     // ── Terminal tab opener ───────────────────────────────────────────────────
 
-    /// Opens a new tab in the target terminal app and runs `command`.
-    /// Requires Accessibility permission (System Events keystroke).
-    /// On failure: prompts for permission and shows restart alert.
+    /// Activates terminal via NSWorkspace (no Automation permission),
+    /// then uses System Events only for new-tab + command (one-time dialog).
     private static func openInTerminalTab(command: String, terminalBundleID: String) {
         let appName = NSWorkspace.shared.runningApplications
             .first { $0.bundleIdentifier == terminalBundleID }?
@@ -63,27 +62,34 @@ enum ActionExecutor {
             .replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "\"", with: "\\\"")
 
-        let script = """
-        tell application "\(appName)" to activate
-        delay 0.35
-        tell application "System Events"
-            tell process "\(appName)"
-                keystroke "t" using command down
-                delay 0.2
-                keystroke "\(escaped)"
-                key code 36
-            end tell
-        end tell
-        """
-
         DispatchQueue.global(qos: .userInitiated).async {
+            // Activate via NSWorkspace — no Automation permission needed
+            if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: terminalBundleID) {
+                NSWorkspace.shared.openApplication(
+                    at: appURL,
+                    configuration: NSWorkspace.OpenConfiguration()
+                )
+            }
+
+            // Wait for app to become frontmost
+            Thread.sleep(forTimeInterval: 0.5)
+
+            // System Events only — triggers one Automation dialog, then permanent
+            let script = """
+            tell application "System Events"
+                tell process "\(appName)"
+                    keystroke "t" using command down
+                    delay 0.25
+                    keystroke "\(escaped)"
+                    key code 36
+                end tell
+            end tell
+            """
+
             guard let appleScript = NSAppleScript(source: script) else { return }
             var error: NSDictionary?
             appleScript.executeAndReturnError(&error)
-
-            if let err = error {
-                NSLog("Biblo: runInTerminal error — \(err)")
-            }
+            if let err = error { NSLog("Biblo: runInTerminal error — \(err)") }
         }
     }
 }
