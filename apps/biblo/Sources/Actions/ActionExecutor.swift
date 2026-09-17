@@ -28,7 +28,7 @@ enum ActionExecutor {
             task.arguments     = ["run", name]
             try? task.run()
 
-        case .openURL(let urlString):
+        case .openURL(let urlString, _):
             guard let url = URL(string: urlString) else { return }
             NSWorkspace.shared.open(url)
 

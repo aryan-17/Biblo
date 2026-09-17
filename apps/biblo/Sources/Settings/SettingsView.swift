@@ -104,6 +104,9 @@ struct SettingsView: View {
         } else if EditorApps.isEditor(bundleID: bundleID) {
             segments[index].type    = .appWithActions
             segments[index].actions = [.launchApp(bundleID: bundleID)]
+        } else if BrowserApps.isBrowser(bundleID: bundleID) {
+            segments[index].type    = .appWithActions
+            segments[index].actions = [.launchApp(bundleID: bundleID)]
         } else {
             segments[index].actions = [.launchApp(bundleID: bundleID)]
             segments[index].type    = .actionOnly
@@ -222,6 +225,46 @@ private struct SegmentRow: View {
         segment.stickyIndex = actions.count > 1 ? 1 : 0
     }
 
+    // ── Browser / comms helpers ───────────────────────────────────────────────
+
+    private var browserBundleID: String? {
+        guard case .launchApp(let id) = segment.actions.first,
+              BrowserApps.isBrowser(bundleID: id) else { return nil }
+        return id
+    }
+
+    private var isBrowserSegment: Bool { browserBundleID != nil }
+
+    private var existingURLEntries: [(label: String, url: String)] {
+        segment.actions.compactMap {
+            if case .openURL(let url, let lbl) = $0 { return (lbl ?? "", url) }
+            return nil
+        }
+    }
+
+    private func urlBinding(index: Int, keyPath: WritableKeyPath<(label: String, url: String), String>) -> Binding<String> {
+        Binding(
+            get: { existingURLEntries.indices.contains(index) ? existingURLEntries[index][keyPath: keyPath] : "" },
+            set: { [self] new in
+                var entries = existingURLEntries
+                while entries.count <= index { entries.append(("", "")) }
+                entries[index][keyPath: keyPath] = new
+                setURLEntries(entries)
+            }
+        )
+    }
+
+    private func setURLEntries(_ entries: [(label: String, url: String)]) {
+        guard let bid = browserBundleID else { return }
+        var actions: [BibloAction] = [.launchApp(bundleID: bid)]
+        for e in entries where !e.url.isEmpty {
+            actions.append(.openURL(url: e.url, label: e.label.isEmpty ? nil : e.label))
+        }
+        segment.actions     = actions
+        segment.type        = actions.count > 1 ? .appWithActions : .actionOnly
+        segment.stickyIndex = actions.count > 1 ? 1 : 0
+    }
+
     private func pickFolder(binding: Binding<String>) {
         let panel = NSOpenPanel()
         panel.canChooseFiles          = false
@@ -282,6 +325,22 @@ private struct SegmentRow: View {
                 VStack(spacing: 6) {
                     TerminalCommandField(placeholder: "Command 1  (e.g. pwd)", text: command1Binding)
                     TerminalCommandField(placeholder: "Command 2  (e.g. git status)", text: command2Binding)
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 10)
+            }
+
+            // Browser / comms URL fields
+            if isBrowserSegment {
+                VStack(spacing: 6) {
+                    BrowserURLField(
+                        label: urlBinding(index: 0, keyPath: \.label),
+                        url:   urlBinding(index: 0, keyPath: \.url)
+                    )
+                    BrowserURLField(
+                        label: urlBinding(index: 1, keyPath: \.label),
+                        url:   urlBinding(index: 1, keyPath: \.url)
+                    )
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 10)
@@ -356,6 +415,39 @@ private struct ProjectPathField: View {
                     .foregroundStyle(Color(white: 0.45))
             }
             .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .background(Color(white: 0.04))
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color(white: 0.12), lineWidth: 1))
+    }
+}
+
+// ─── BrowserURLField ─────────────────────────────────────────────────────────
+
+private struct BrowserURLField: View {
+    @Binding var label: String
+    @Binding var url: String
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "globe")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(Color(red: 0.6, green: 0.55, blue: 1.0))
+                .frame(width: 16)
+            TextField("Label", text: $label)
+                .textFieldStyle(.plain)
+                .font(.system(size: 12))
+                .foregroundStyle(Color(white: 0.78))
+                .frame(width: 72)
+            Text("→")
+                .font(.system(size: 11))
+                .foregroundStyle(Color(white: 0.3))
+            TextField("https://", text: $url)
+                .textFieldStyle(.plain)
+                .font(.system(size: 12, design: .monospaced))
+                .foregroundStyle(Color(white: 0.78))
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 7)

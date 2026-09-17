@@ -10,6 +10,7 @@
 		15BB3E3039C5AAA46B2850DD /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9DCD50CA195A3C92CAF1B0E /* Models.swift */; };
 		1D6D437B4248194EFA13B62D /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0FC43D93F541E11095E68A /* main.swift */; };
 		208608807D2D8EA0FE98509B /* AppIconCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 489B401200CDC52045FF9E0A /* AppIconCache.swift */; };
+		284DDB2816B9098A7E51F2AA /* BrowserApps.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF084B2AF5B5116488B7582D /* BrowserApps.swift */; };
 		2CE18B010BF8128A822CCF76 /* ConfigLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C98692FC51F49DD5803B350F /* ConfigLoader.swift */; };
 		3B84CF586CB4922F4708A7E5 /* TerminalApps.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63DE36DA493166123794B872 /* TerminalApps.swift */; };
 		4E080DAA2E7B26979EB07895 /* WheelState.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7F014C8ED497705DED4D8BC /* WheelState.swift */; };
@@ -45,6 +46,7 @@
 		D7F014C8ED497705DED4D8BC /* WheelState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WheelState.swift; sourceTree = "<group>"; };
 		D9DCD50CA195A3C92CAF1B0E /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		DAD8AE70418A776474D52E1E /* BackdropWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackdropWindow.swift; sourceTree = "<group>"; };
+		DF084B2AF5B5116488B7582D /* BrowserApps.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserApps.swift; sourceTree = "<group>"; };
 		E39B8BB64CE0B59C934BFD8D /* WheelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WheelView.swift; sourceTree = "<group>"; };
 		EC37B9450A8D945AAD428667 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -176,6 +178,7 @@
 		D60D5A3FDEA9622572DBF7CD /* Terminal */ = {
 			isa = PBXGroup;
 			children = (
+				DF084B2AF5B5116488B7582D /* BrowserApps.swift */,
 				5C1DF61A19B24F79D21FB2B4 /* EditorApps.swift */,
 				63DE36DA493166123794B872 /* TerminalApps.swift */,
 			);
@@ -246,6 +249,7 @@
 				D581CCE284B8CDF4885C2991 /* AppDelegate.swift in Sources */,
 				208608807D2D8EA0FE98509B /* AppIconCache.swift in Sources */,
 				ABAE89BF90613A91654D8BE7 /* BackdropWindow.swift in Sources */,
+				284DDB2816B9098A7E51F2AA /* BrowserApps.swift in Sources */,
 				2CE18B010BF8128A822CCF76 /* ConfigLoader.swift in Sources */,
 				EF6928C961F0A53CBD2D211F /* EditorApps.swift in Sources */,
 				68D3ABCB1D9DFB48CCC3FDC7 /* HotkeyManager.swift in Sources */,
