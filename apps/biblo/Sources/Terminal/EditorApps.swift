@@ -27,10 +27,25 @@ enum EditorApps {
             "/usr/local/bin/code",
             "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code",
         ],
-        "com.jetbrains.intellij": ["/usr/local/bin/idea"],
-        "com.jetbrains.WebStorm": ["/usr/local/bin/webstorm"],
-        "com.jetbrains.PyCharm": ["/usr/local/bin/pycharm"],
-        "com.jetbrains.goland": ["/usr/local/bin/goland"],
+        "com.jetbrains.intellij": [
+            "/usr/local/bin/idea",
+            "\(NSHomeDirectory())/Library/Application Support/JetBrains/Toolbox/scripts/idea",
+            "/Applications/IntelliJ IDEA.app/Contents/MacOS/idea",
+        ],
+        "com.jetbrains.WebStorm": [
+            "/usr/local/bin/webstorm",
+            "\(NSHomeDirectory())/Library/Application Support/JetBrains/Toolbox/scripts/webstorm",
+            "/Applications/WebStorm.app/Contents/MacOS/webstorm",
+        ],
+        "com.jetbrains.PyCharm": [
+            "/usr/local/bin/pycharm",
+            "\(NSHomeDirectory())/Library/Application Support/JetBrains/Toolbox/scripts/pycharm",
+            "/Applications/PyCharm.app/Contents/MacOS/pycharm",
+        ],
+        "com.jetbrains.goland": [
+            "/usr/local/bin/goland",
+            "\(NSHomeDirectory())/Library/Application Support/JetBrains/Toolbox/scripts/goland",
+        ],
         "io.zed.zed": ["/usr/local/bin/zed"],
     ]
 
