@@ -155,18 +155,13 @@ final class WheelController {
 
         // Outer ring selected → fire that sub-command
         if let j = outerIdx {
-            let subCmds = seg.actions.filter {
-                if case .runInTerminal = $0 { return true }
-                return false
+            let subActions = seg.actions.filter {
+                if case .launchApp = $0 { return false }; return true
             }
-            guard j < subCmds.count else { return }
-            let action = subCmds[j]
-            if let ai = seg.actions.firstIndex(where: {
-                if case .runInTerminal(let c1, _) = $0,
-                   case .runInTerminal(let c2, _) = action,
-                   c1 == c2 { return true }
-                return false
-            }) {
+            guard j < subActions.count else { return }
+            let action = subActions[j]
+            // Find this action's real index in the full actions array for sticky tracking
+            if let ai = seg.actions.firstIndex(where: { $0.displayLabel == action.displayLabel }) {
                 stickyIndices[idx] = ai
                 lastFired = (idx, ai)
             }
@@ -208,8 +203,7 @@ final class WheelController {
                 if [123, 124].contains(event.keyCode),
                    let innerIdx = self.state.highlightedIndex {
                     let subCount = self.wheel.segments[innerIdx].actions.filter {
-                        if case .runInTerminal = $0 { return true }
-                        return false
+                        if case .launchApp = $0 { return false }; return true
                     }.count
                     if subCount > 0 {
                         let cur = self.state.outerSelectedIndex ?? 0
@@ -296,8 +290,7 @@ final class WheelController {
 
             let seg = wheel.segments[innerIdx]
             let subCount = seg.actions.filter {
-                if case .runInTerminal = $0 { return true }
-                return false
+                if case .launchApp = $0 { return false }; return true
             }.count
 
             guard subCount > 0 else { state.outerSelectedIndex = nil; return }
@@ -385,12 +378,11 @@ final class WheelController {
 
         // Outer ring selected via arrow keys → fire sub-command
         if let j = outerIdx {
-            let subCmds = seg.actions.filter {
-                if case .runInTerminal = $0 { return true }
-                return false
+            let subActions = seg.actions.filter {
+                if case .launchApp = $0 { return false }; return true
             }
-            guard j < subCmds.count else { return }
-            ActionExecutor.execute(subCmds[j])
+            guard j < subActions.count else { return }
+            ActionExecutor.execute(subActions[j])
             return
         }
 

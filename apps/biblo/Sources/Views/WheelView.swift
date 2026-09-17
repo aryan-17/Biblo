@@ -68,7 +68,7 @@ struct WheelView: View {
                 // ── Outer ring command labels ─────────────────────────────────
                 if let wheel = state.wheel, let innerIdx = state.highlightedIndex {
                     OuterRingLabels(
-                        commands: terminalCommands(in: wheel.segments[innerIdx]),
+                        commands: outerRingLabels(in: wheel.segments[innerIdx]),
                         segIdx: innerIdx,
                         segCount: segCount,
                         origin: origin,
@@ -84,10 +84,13 @@ struct WheelView: View {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private func terminalCommands(in seg: Segment) -> [String] {
-        seg.actions.compactMap {
-            if case .runInTerminal(let cmd, _) = $0 { return cmd }
-            return nil
+    /// Display labels for all level-2 actions (everything except the first launchApp).
+    private func outerRingLabels(in seg: Segment) -> [String] {
+        seg.actions.compactMap { action -> String? in
+            switch action {
+            case .launchApp:    return nil   // primary action — not shown in outer ring
+            default:            return action.displayLabel
+            }
         }
     }
 
@@ -139,7 +142,7 @@ private struct WheelCanvas: View {
             // Outer ring arcs (only when a terminal segment is highlighted)
             guard let idx = state.highlightedIndex else { return }
             let subCount = wheel.segments[idx].actions.filter {
-                if case .runInTerminal = $0 { return true }; return false
+                if case .launchApp = $0 { return false }; return true
             }.count
             guard subCount > 0 else { return }
 
