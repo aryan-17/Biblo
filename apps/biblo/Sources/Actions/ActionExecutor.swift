@@ -50,10 +50,10 @@ enum ActionExecutor {
         case .openProject(let path, let editorBundleID):
             let expanded = (path as NSString).expandingTildeInPath
             if let cli = EditorApps.cliPath(for: editorBundleID) {
-                // Use CLI with --reuse-window: focuses existing window if project is open
+                // CLI open: VS Code/Cursor focus the existing window if project is already open
                 let task = Process()
                 task.executableURL = URL(fileURLWithPath: cli)
-                task.arguments     = ["--reuse-window", expanded]
+                task.arguments     = [expanded]
                 try? task.run()
             } else {
                 // Fallback for Xcode and editors without CLI (NSWorkspace handles focus for Xcode)
