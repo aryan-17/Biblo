@@ -29,4 +29,8 @@ final class WheelPanel: NSPanel {
     // so global event monitors fire reliably.
     override var canBecomeKey:  Bool { true }
     override var canBecomeMain: Bool { false }
+
+    // Swallow all key equivalents (⌘, etc.) while the wheel is visible.
+    // Prevents ⌘, from escaping to the status bar menu and opening Preferences.
+    override func performKeyEquivalent(with event: NSEvent) -> Bool { true }
 }
