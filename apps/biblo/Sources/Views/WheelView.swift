@@ -146,10 +146,11 @@ struct WheelView: View {
                         let totalSpan = segEnd - segStart - segGap * 2
                         let subSpan   = totalSpan / Double(subCmds.count)
 
-                        ForEach(subCmds, id: \.0) { j, cmd in
-                            let midA   = segStart + segGap + Double(j) * subSpan + subSpan / 2
-                            let lx     = origin.x + outerLabelRadius * CGFloat(cos(midA))
-                            let ly     = origin.y + outerLabelRadius * CGFloat(sin(midA))
+                        ForEach(0 ..< subCmds.count, id: \.self) { j in
+                            let cmd      = subCmds[j].1
+                            let midA     = segStart + segGap + Double(j) * subSpan + subSpan / 2
+                            let lx       = origin.x + outerLabelRadius * CGFloat(cos(midA))
+                            let ly       = origin.y + outerLabelRadius * CGFloat(sin(midA))
                             let selected = state.outerSelectedIndex == j
 
                             Text(cmd)
