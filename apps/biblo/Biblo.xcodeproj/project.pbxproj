@@ -23,6 +23,7 @@
 		ABAE89BF90613A91654D8BE7 /* BackdropWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAD8AE70418A776474D52E1E /* BackdropWindow.swift */; };
 		D581CCE284B8CDF4885C2991 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D7F3C4CB6E590C1F04AFF97 /* AppDelegate.swift */; };
 		E78CB4FD3AE963C4E41159F5 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC37B9450A8D945AAD428667 /* SettingsView.swift */; };
+		EF6928C961F0A53CBD2D211F /* EditorApps.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C1DF61A19B24F79D21FB2B4 /* EditorApps.swift */; };
 		F98D1AEC092B57842C562B99 /* ActionExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21787B301F9A20275CB81D3F /* ActionExecutor.swift */; };
 /* End PBXBuildFile section */
 
@@ -32,6 +33,7 @@
 		489B401200CDC52045FF9E0A /* AppIconCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIconCache.swift; sourceTree = "<group>"; };
 		4E5D211A286CD3AD75C24D8B /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
 		52C859E0C1094C061B333C8E /* KeyMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyMapper.swift; sourceTree = "<group>"; };
+		5C1DF61A19B24F79D21FB2B4 /* EditorApps.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorApps.swift; sourceTree = "<group>"; };
 		63DE36DA493166123794B872 /* TerminalApps.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalApps.swift; sourceTree = "<group>"; };
 		8A0FC43D93F541E11095E68A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		8D7F3C4CB6E590C1F04AFF97 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -174,6 +176,7 @@
 		D60D5A3FDEA9622572DBF7CD /* Terminal */ = {
 			isa = PBXGroup;
 			children = (
+				5C1DF61A19B24F79D21FB2B4 /* EditorApps.swift */,
 				63DE36DA493166123794B872 /* TerminalApps.swift */,
 			);
 			path = Terminal;
@@ -244,6 +247,7 @@
 				208608807D2D8EA0FE98509B /* AppIconCache.swift in Sources */,
 				ABAE89BF90613A91654D8BE7 /* BackdropWindow.swift in Sources */,
 				2CE18B010BF8128A822CCF76 /* ConfigLoader.swift in Sources */,
+				EF6928C961F0A53CBD2D211F /* EditorApps.swift in Sources */,
 				68D3ABCB1D9DFB48CCC3FDC7 /* HotkeyManager.swift in Sources */,
 				6FDBC21F67977FBF6F450980 /* KeyMapper.swift in Sources */,
 				15BB3E3039C5AAA46B2850DD /* Models.swift in Sources */,

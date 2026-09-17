@@ -99,10 +99,11 @@ struct SettingsView: View {
         segments[index].label = appName
 
         if TerminalApps.isTerminal(bundleID: bundleID) {
-            // Terminal app: set appWithActions, preserve any existing runInTerminal actions
             segments[index].type    = .appWithActions
             segments[index].actions = [.launchApp(bundleID: bundleID)]
-            // Existing commands (if re-picking same terminal) are cleared; user re-enters in fields
+        } else if EditorApps.isEditor(bundleID: bundleID) {
+            segments[index].type    = .appWithActions
+            segments[index].actions = [.launchApp(bundleID: bundleID)]
         } else {
             segments[index].actions = [.launchApp(bundleID: bundleID)]
             segments[index].type    = .actionOnly
@@ -180,6 +181,58 @@ private struct SegmentRow: View {
         segment.stickyIndex = actions.count > 1 ? 1 : 0
     }
 
+    // ── Editor helpers ────────────────────────────────────────────────────────
+
+    private var editorBundleID: String? {
+        guard case .launchApp(let id) = segment.actions.first,
+              EditorApps.isEditor(bundleID: id) else { return nil }
+        return id
+    }
+
+    private var isEditorSegment: Bool { editorBundleID != nil }
+
+    private var existingProjects: [String] {
+        segment.actions.compactMap {
+            if case .openProject(let path, _) = $0 { return path }
+            return nil
+        }
+    }
+
+    private var project1Binding: Binding<String> {
+        Binding(
+            get: { existingProjects.indices.contains(0) ? existingProjects[0] : "" },
+            set: { new in setProjects(p1: new, p2: existingProjects.indices.contains(1) ? existingProjects[1] : "") }
+        )
+    }
+
+    private var project2Binding: Binding<String> {
+        Binding(
+            get: { existingProjects.indices.contains(1) ? existingProjects[1] : "" },
+            set: { new in setProjects(p1: existingProjects.indices.contains(0) ? existingProjects[0] : "", p2: new) }
+        )
+    }
+
+    private func setProjects(p1: String, p2: String) {
+        guard let eid = editorBundleID else { return }
+        var actions: [BibloAction] = [.launchApp(bundleID: eid)]
+        if !p1.isEmpty { actions.append(.openProject(path: p1, editorBundleID: eid)) }
+        if !p2.isEmpty { actions.append(.openProject(path: p2, editorBundleID: eid)) }
+        segment.actions     = actions
+        segment.type        = actions.count > 1 ? .appWithActions : .actionOnly
+        segment.stickyIndex = actions.count > 1 ? 1 : 0
+    }
+
+    private func pickFolder(binding: Binding<String>) {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles          = false
+        panel.canChooseDirectories    = true
+        panel.allowsMultipleSelection = false
+        panel.message                 = "Choose a project folder"
+        if panel.runModal() == .OK, let url = panel.url {
+            binding.wrappedValue = url.path
+        }
+    }
+
     // ── Body ──────────────────────────────────────────────────────────────────
 
     var body: some View {
@@ -224,11 +277,25 @@ private struct SegmentRow: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 10)
 
-            // Terminal command fields — shown only for known terminal apps
+            // Terminal command fields
             if isTerminalSegment {
                 VStack(spacing: 6) {
                     TerminalCommandField(placeholder: "Command 1  (e.g. pwd)", text: command1Binding)
                     TerminalCommandField(placeholder: "Command 2  (e.g. git status)", text: command2Binding)
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 10)
+            }
+
+            // Editor project fields
+            if isEditorSegment {
+                VStack(spacing: 6) {
+                    ProjectPathField(placeholder: "Project 1  (e.g. ~/projects/myapp)",
+                                     text: project1Binding,
+                                     onPick: { pickFolder(binding: project1Binding) })
+                    ProjectPathField(placeholder: "Project 2  (e.g. ~/projects/website)",
+                                     text: project2Binding,
+                                     onPick: { pickFolder(binding: project2Binding) })
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 10)
@@ -263,6 +330,38 @@ private struct TerminalCommandField: View {
             RoundedRectangle(cornerRadius: 6)
                 .stroke(Color(white: 0.12), lineWidth: 1)
         )
+    }
+}
+
+// ─── ProjectPathField ─────────────────────────────────────────────────────────
+
+private struct ProjectPathField: View {
+    let placeholder: String
+    @Binding var text: String
+    let onPick: () -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "folder")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(Color(red: 0.6, green: 0.55, blue: 1.0))
+                .frame(width: 16)
+            TextField(placeholder, text: $text)
+                .textFieldStyle(.plain)
+                .font(.system(size: 12, design: .monospaced))
+                .foregroundStyle(Color(white: 0.78))
+            Button(action: onPick) {
+                Image(systemName: "ellipsis.circle")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color(white: 0.45))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .background(Color(white: 0.04))
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color(white: 0.12), lineWidth: 1))
     }
 }
 

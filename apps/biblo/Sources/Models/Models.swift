@@ -46,9 +46,10 @@ enum BibloAction: Codable {
     case runAppleScript(source: String)
     case openFile(path: String)
     case runInTerminal(command: String, terminalBundleID: String)
+    case openProject(path: String, editorBundleID: String)
 
     private enum CodingKeys: String, CodingKey {
-        case type, bundleID, command, name, url, keyCombo, source, path, terminalBundleID
+        case type, bundleID, command, name, url, keyCombo, source, path, terminalBundleID, editorBundleID
     }
 
     init(from decoder: Decoder) throws {
@@ -66,6 +67,10 @@ enum BibloAction: Codable {
             let cmd = try c.decode(String.self, forKey: .command)
             let tid = try c.decode(String.self, forKey: .terminalBundleID)
             self = .runInTerminal(command: cmd, terminalBundleID: tid)
+        case "openProject":
+            let p  = try c.decode(String.self, forKey: .path)
+            let eid = try c.decode(String.self, forKey: .editorBundleID)
+            self = .openProject(path: p, editorBundleID: eid)
         default:
             throw DecodingError.dataCorruptedError(forKey: .type, in: c,
                 debugDescription: "Unknown action type: \(type)")
@@ -86,6 +91,10 @@ enum BibloAction: Codable {
             try c.encode("runInTerminal", forKey: .type)
             try c.encode(cmd, forKey: .command)
             try c.encode(tid, forKey: .terminalBundleID)
+        case .openProject(let p, let eid):
+            try c.encode("openProject", forKey: .type)
+            try c.encode(p, forKey: .path)
+            try c.encode(eid, forKey: .editorBundleID)
         }
     }
 
@@ -100,6 +109,9 @@ enum BibloAction: Codable {
         case .runAppleScript:             return "AppleScript"
         case .openFile(let path):         return URL(fileURLWithPath: path).lastPathComponent
         case .runInTerminal(let cmd, _):  return String(cmd.prefix(24))
+        case .openProject(let path, _):
+            let expanded = (path as NSString).expandingTildeInPath
+            return URL(fileURLWithPath: expanded).lastPathComponent
         }
     }
 }

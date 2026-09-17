@@ -46,6 +46,16 @@ enum ActionExecutor {
 
         case .runInTerminal(let command, let terminalBundleID):
             openInTerminalTab(command: command, terminalBundleID: terminalBundleID)
+
+        case .openProject(let path, let editorBundleID):
+            let expanded = (path as NSString).expandingTildeInPath
+            let folder   = URL(fileURLWithPath: expanded)
+            guard let editorURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: editorBundleID) else {
+                NSLog("Biblo: editor not found — \(editorBundleID)")
+                return
+            }
+            NSWorkspace.shared.open([folder], withApplicationAt: editorURL,
+                                    configuration: NSWorkspace.OpenConfiguration())
         }
     }
 
