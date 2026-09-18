@@ -169,12 +169,12 @@ final class WheelController {
             return
         }
 
-        // Inner ring — normal action
+        // Inner ring — always fire primary action (action[0] = launchApp / default)
+        // Use ←/→ or move cursor outward to pick a level-2 command from the outer ring
         guard !seg.actions.isEmpty else { return }
-        let actionIdx = min(stickyIndices[idx] ?? 0, seg.actions.count - 1)
-        let action    = seg.actions[actionIdx]
-        stickyIndices[idx] = actionIdx
-        lastFired = (idx, actionIdx)
+        let action = seg.actions[0]
+        stickyIndices[idx] = 0
+        lastFired = (idx, 0)
         ActionExecutor.execute(action)
     }
 
@@ -206,10 +206,15 @@ final class WheelController {
                         if case .launchApp = $0 { return false }; return true
                     }.count
                     if subCount > 0 {
-                        let cur = self.state.outerSelectedIndex ?? 0
-                        self.state.outerSelectedIndex = event.keyCode == 124
-                            ? (cur + 1) % subCount          // right → next
-                            : (cur - 1 + subCount) % subCount  // left → prev
+                        if self.state.outerSelectedIndex == nil {
+                            // First arrow press enters outer ring at position 0
+                            self.state.outerSelectedIndex = 0
+                        } else {
+                            let cur = self.state.outerSelectedIndex!
+                            self.state.outerSelectedIndex = event.keyCode == 124
+                                ? (cur + 1) % subCount   // right → next
+                                : (cur - 1 + subCount) % subCount  // left → prev
+                        }
                         return nil
                     }
                 }
@@ -386,11 +391,11 @@ final class WheelController {
             return
         }
 
+        // Inner ring Return → primary action (launchApp)
         guard !seg.actions.isEmpty else { return }
-        let actionIdx = min(stickyIndices[idx] ?? 0, seg.actions.count - 1)
-        stickyIndices[idx] = actionIdx
-        lastFired = (idx, actionIdx)
-        ActionExecutor.execute(seg.actions[actionIdx])
+        stickyIndices[idx] = 0
+        lastFired = (idx, 0)
+        ActionExecutor.execute(seg.actions[0])
     }
 
     // ─────────────────────────────────────────────────────────────────────────
