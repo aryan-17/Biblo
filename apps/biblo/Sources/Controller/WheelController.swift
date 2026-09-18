@@ -199,25 +199,6 @@ final class WheelController {
             switch event.keyCode {
             case 123, 124, 125, 126:
                 self.pressedArrows.insert(event.keyCode)
-                // Left/right cycle outer ring when a terminal segment is highlighted
-                if [123, 124].contains(event.keyCode),
-                   let innerIdx = self.state.highlightedIndex {
-                    let subCount = self.wheel.segments[innerIdx].actions.filter {
-                        if case .launchApp = $0 { return false }; return true
-                    }.count
-                    if subCount > 0 {
-                        if self.state.outerSelectedIndex == nil {
-                            // First arrow press enters outer ring at position 0
-                            self.state.outerSelectedIndex = 0
-                        } else {
-                            let cur = self.state.outerSelectedIndex!
-                            self.state.outerSelectedIndex = event.keyCode == 124
-                                ? (cur + 1) % subCount   // right → next
-                                : (cur - 1 + subCount) % subCount  // left → prev
-                        }
-                        return nil
-                    }
-                }
                 self.stepTowardPressedDirection()
                 return nil
             case 53:
