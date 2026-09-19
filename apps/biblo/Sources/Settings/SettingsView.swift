@@ -237,7 +237,7 @@ private struct SegmentRow: View {
 
     private var existingURLEntries: [(label: String, url: String)] {
         segment.actions.compactMap {
-            if case .openURL(let url, let lbl) = $0 { return (lbl ?? "", url) }
+            if case .openURL(let url, let lbl, _) = $0 { return (lbl ?? "", url) }
             return nil
         }
     }
@@ -258,7 +258,7 @@ private struct SegmentRow: View {
         guard let bid = browserBundleID else { return }
         var actions: [BibloAction] = [.launchApp(bundleID: bid)]
         for e in entries where !e.url.isEmpty {
-            actions.append(.openURL(url: e.url, label: e.label.isEmpty ? nil : e.label))
+            actions.append(.openURL(url: e.url, label: e.label.isEmpty ? nil : e.label, appBundleID: bid))
         }
         segment.actions     = actions
         segment.type        = actions.count > 1 ? .appWithActions : .actionOnly

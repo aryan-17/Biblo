@@ -28,9 +28,15 @@ enum ActionExecutor {
             task.arguments     = ["run", name]
             try? task.run()
 
-        case .openURL(let urlString, _):
+        case .openURL(let urlString, _, let appBundleID):
             guard let url = URL(string: urlString) else { return }
-            NSWorkspace.shared.open(url)
+            if let bid = appBundleID,
+               let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bid) {
+                NSWorkspace.shared.open([url], withApplicationAt: appURL,
+                                        configuration: NSWorkspace.OpenConfiguration())
+            } else {
+                NSWorkspace.shared.open(url)
+            }
 
         case .openFile(let path):
             NSWorkspace.shared.open(URL(fileURLWithPath: path))

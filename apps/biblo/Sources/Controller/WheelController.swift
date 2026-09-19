@@ -3,6 +3,12 @@ import Carbon.HIToolbox
 import SwiftUI
 import Combine
 
+private extension CGFloat {
+    func clamped(to range: ClosedRange<CGFloat>) -> CGFloat {
+        Swift.min(Swift.max(self, range.lowerBound), range.upperBound)
+    }
+}
+
 /// Orchestrates the wheel lifecycle:
 /// hotkey down → show → track mouse → hotkey up → fire action.
 final class WheelController {
@@ -117,7 +123,12 @@ final class WheelController {
         panel.setFrame(screen.frame,    display: false)
         backdrop.setFrame(screen.frame, display: false)
 
-        state.wheelOrigin = toViewCoord(cursor, screen: screen)
+        let raw = toViewCoord(cursor, screen: screen)
+        let margin: CGFloat = 278  // outerRingOuter(268) + 10pt padding
+        state.wheelOrigin = CGPoint(
+            x: raw.x.clamped(to: margin ... (screen.frame.width  - margin)),
+            y: raw.y.clamped(to: margin ... (screen.frame.height - margin))
+        )
         state.highlightedIndex = nil
 
         backdrop.orderFront(nil)
@@ -198,8 +209,15 @@ final class WheelController {
             guard let self = self else { return event }
             switch event.keyCode {
             case 123, 124, 125, 126:
-                self.pressedArrows.insert(event.keyCode)
-                self.stepTowardPressedDirection()
+                if self.state.outerSelectedIndex != nil,
+                   event.keyCode == 123 || event.keyCode == 124 {
+                    // In outer ring mode: ← → cycle items
+                    self.cycleOuterRing(forward: event.keyCode == 124)
+                } else {
+                    // Otherwise: navigate inner ring segments
+                    self.pressedArrows.insert(event.keyCode)
+                    self.stepTowardPressedDirection()
+                }
                 return nil
             case 53:
                 self.cancelAndClose()
@@ -207,8 +225,21 @@ final class WheelController {
             case 36, 76:
                 if self.state.highlightedIndex == nil {
                     self.cancelAndClose()
-                } else {
+                } else if self.state.outerSelectedIndex != nil {
+                    // Already in outer ring → fire selected sub-action
                     self.fireCurrentSegment()
+                } else {
+                    // Inner ring → try to enter outer ring
+                    let idx = self.state.highlightedIndex!
+                    let seg = self.wheel.segments[idx]
+                    let subCount = seg.actions.filter {
+                        if case .launchApp = $0 { return false }; return true
+                    }.count
+                    if subCount > 0 {
+                        self.state.outerSelectedIndex = 0
+                    } else {
+                        self.fireCurrentSegment()
+                    }
                 }
                 return nil
             default:
@@ -229,7 +260,6 @@ final class WheelController {
             return event
         }
 
-        updateFromCursor()
     }
 
     private func stopTracking() {
@@ -310,6 +340,9 @@ final class WheelController {
             : (cur - 1 + seg.actions.count) % seg.actions.count
         stickyIndices[idx] = cur
         state.actionIndices = stickyIndices
+        // Persist to disk
+        wheel.segments[idx].stickyIndex = cur
+        ConfigLoader.save(wheel)
     }
 
     private func stepTowardPressedDirection() {
@@ -333,11 +366,26 @@ final class WheelController {
 
         let opposite = (target + 4) % 8
 
+        state.outerSelectedIndex = nil
         if state.highlightedIndex == opposite {
             state.highlightedIndex = nil
         } else {
             state.highlightedIndex = target
         }
+    }
+
+    private func cycleOuterRing(forward: Bool) {
+        guard let idx = state.highlightedIndex else { return }
+        let seg = wheel.segments[idx]
+        let subActions = seg.actions.filter {
+            if case .launchApp = $0 { return false }; return true
+        }
+        guard !subActions.isEmpty else { return }
+        let count = subActions.count
+        let cur = state.outerSelectedIndex ?? (forward ? -1 : count)
+        state.outerSelectedIndex = forward
+            ? (cur + 1) % count
+            : (cur - 1 + count) % count
     }
 
     private func cancelAndClose() {

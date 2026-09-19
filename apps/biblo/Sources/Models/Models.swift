@@ -41,7 +41,7 @@ enum BibloAction: Codable {
     case launchApp(bundleID: String)
     case runShell(command: String)
     case runShortcut(name: String)
-    case openURL(url: String, label: String?)
+    case openURL(url: String, label: String?, appBundleID: String?)
     case sendKeystroke(keyCombo: String)
     case runAppleScript(source: String)
     case openFile(path: String)
@@ -49,7 +49,7 @@ enum BibloAction: Codable {
     case openProject(path: String, editorBundleID: String)
 
     private enum CodingKeys: String, CodingKey {
-        case type, bundleID, command, name, url, label, keyCombo, source, path, terminalBundleID, editorBundleID
+        case type, bundleID, command, name, url, label, appBundleID, keyCombo, source, path, terminalBundleID, editorBundleID
     }
 
     init(from decoder: Decoder) throws {
@@ -60,9 +60,10 @@ enum BibloAction: Codable {
         case "runShell":       self = .runShell(command: try c.decode(String.self, forKey: .command))
         case "runShortcut":    self = .runShortcut(name: try c.decode(String.self, forKey: .name))
         case "openURL":
-            let url   = try c.decode(String.self, forKey: .url)
-            let label = try? c.decode(String.self, forKey: .label)
-            self = .openURL(url: url, label: label)
+            let url         = try c.decode(String.self, forKey: .url)
+            let label       = try? c.decode(String.self, forKey: .label)
+            let appBundleID = try? c.decode(String.self, forKey: .appBundleID)
+            self = .openURL(url: url, label: label, appBundleID: appBundleID)
         case "sendKeystroke":  self = .sendKeystroke(keyCombo: try c.decode(String.self, forKey: .keyCombo))
         case "runAppleScript": self = .runAppleScript(source: try c.decode(String.self, forKey: .source))
         case "openFile":       self = .openFile(path: try c.decode(String.self, forKey: .path))
@@ -86,10 +87,11 @@ enum BibloAction: Codable {
         case .launchApp(let v):      try c.encode("launchApp", forKey: .type);      try c.encode(v, forKey: .bundleID)
         case .runShell(let v):       try c.encode("runShell", forKey: .type);       try c.encode(v, forKey: .command)
         case .runShortcut(let v):    try c.encode("runShortcut", forKey: .type);    try c.encode(v, forKey: .name)
-        case .openURL(let url, let lbl):
+        case .openURL(let url, let lbl, let app):
             try c.encode("openURL", forKey: .type)
             try c.encode(url, forKey: .url)
             if let lbl { try c.encode(lbl, forKey: .label) }
+            if let app { try c.encode(app, forKey: .appBundleID) }
         case .sendKeystroke(let v):  try c.encode("sendKeystroke", forKey: .type);  try c.encode(v, forKey: .keyCombo)
         case .runAppleScript(let v): try c.encode("runAppleScript", forKey: .type); try c.encode(v, forKey: .source)
         case .openFile(let v):       try c.encode("openFile", forKey: .type);       try c.encode(v, forKey: .path)
@@ -110,7 +112,7 @@ enum BibloAction: Codable {
         case .launchApp:                   return "Launch"
         case .runShell(let cmd):          return String(cmd.prefix(24))
         case .runShortcut(let name):      return name
-        case .openURL(let url, let lbl):
+        case .openURL(let url, let lbl, _):
             if let lbl, !lbl.isEmpty { return lbl }
             return URL(string: url)?.host ?? String(url.prefix(24))
         case .sendKeystroke(let k):       return k

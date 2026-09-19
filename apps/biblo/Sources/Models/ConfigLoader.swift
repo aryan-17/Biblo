@@ -7,6 +7,21 @@ enum ConfigLoader {
             .appendingPathComponent(".config/biblo/wheels.json")
     }
 
+    /// Writes the wheel back to disk (background thread, best-effort).
+    static func save(_ wheel: Wheel) {
+        let config = WheelConfig(wheels: [wheel])
+        DispatchQueue.global(qos: .utility).async {
+            guard let data = try? JSONEncoder().encode(config) else { return }
+            // Pretty-print
+            if let obj = try? JSONSerialization.jsonObject(with: data),
+               let pretty = try? JSONSerialization.data(withJSONObject: obj, options: .prettyPrinted) {
+                try? pretty.write(to: configURL, options: .atomic)
+            } else {
+                try? data.write(to: configURL, options: .atomic)
+            }
+        }
+    }
+
     /// Loads config from disk; returns a built-in default wheel if file missing or malformed.
     static func load() -> Wheel {
         if let data = try? Data(contentsOf: configURL),
