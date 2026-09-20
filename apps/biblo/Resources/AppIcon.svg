@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1c1530"/>
+      <stop offset="100%" stop-color="#0a0814"/>
+    </linearGradient>
+    <radialGradient id="active-fill" cx="50%" cy="20%" r="80%">
+      <stop offset="0%" stop-color="#c4b5fd"/>
+      <stop offset="100%" stop-color="#7c6af7"/>
+    </radialGradient>
+    <radialGradient id="center-fill" cx="40%" cy="35%" r="70%">
+      <stop offset="0%" stop-color="#a896ff"/>
+      <stop offset="100%" stop-color="#5b4fd4"/>
+    </radialGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="outer-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="20" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+      </feMerge>
+    </filter>
+    <clipPath id="squircle-clip">
+      <rect width="1024" height="1024" rx="220" ry="220"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="220" ry="220" fill="url(#bg)"/>
+
+  <!-- Subtle radial bg glow -->
+  <circle cx="512" cy="512" r="420" fill="#7c6af7" opacity="0.06"/>
+
+  <!-- Segment template path: inner r=155, outer r=340, span 41° centred at top -->
+  <!-- M 392.9,193.5 A 340,340 0 0,1 631.1,193.5 L 566.3,366.8 A 155,155 0 0,0 457.7,366.8 Z -->
+
+  <!-- 7 dim segments (rotated 45°–315°) -->
+  <g opacity="0.18" fill="#9d8fff" stroke="#7c6af7" stroke-width="2">
+    <path d="M 392.9,193.5 A 340,340 0 0,1 631.1,193.5 L 566.3,366.8 A 155,155 0 0,0 457.7,366.8 Z" transform="rotate(45,512,512)"/>
+    <path d="M 392.9,193.5 A 340,340 0 0,1 631.1,193.5 L 566.3,366.8 A 155,155 0 0,0 457.7,366.8 Z" transform="rotate(90,512,512)"/>
+    <path d="M 392.9,193.5 A 340,340 0 0,1 631.1,193.5 L 566.3,366.8 A 155,155 0 0,0 457.7,366.8 Z" transform="rotate(135,512,512)"/>
+    <path d="M 392.9,193.5 A 340,340 0 0,1 631.1,193.5 L 566.3,366.8 A 155,155 0 0,0 457.7,366.8 Z" transform="rotate(180,512,512)"/>
+    <path d="M 392.9,193.5 A 340,340 0 0,1 631.1,193.5 L 566.3,366.8 A 155,155 0 0,0 457.7,366.8 Z" transform="rotate(225,512,512)"/>
+    <path d="M 392.9,193.5 A 340,340 0 0,1 631.1,193.5 L 566.3,366.8 A 155,155 0 0,0 457.7,366.8 Z" transform="rotate(270,512,512)"/>
+    <path d="M 392.9,193.5 A 340,340 0 0,1 631.1,193.5 L 566.3,366.8 A 155,155 0 0,0 457.7,366.8 Z" transform="rotate(315,512,512)"/>
+  </g>
+
+  <!-- Active segment glow (top) -->
+  <path d="M 392.9,193.5 A 340,340 0 0,1 631.1,193.5 L 566.3,366.8 A 155,155 0 0,0 457.7,366.8 Z"
+        fill="#7c6af7" opacity="0.5" filter="url(#glow)"/>
+
+  <!-- Active segment (top, bright) -->
+  <path d="M 392.9,193.5 A 340,340 0 0,1 631.1,193.5 L 566.3,366.8 A 155,155 0 0,0 457.7,366.8 Z"
+        fill="url(#active-fill)" stroke="#c4b5fd" stroke-width="2" opacity="0.95"/>
+
+  <!-- Center circle -->
+  <circle cx="512" cy="512" r="100" fill="url(#center-fill)" opacity="0.9"/>
+
+  <!-- Center dot -->
+  <circle cx="512" cy="512" r="22" fill="white" opacity="0.95"/>
+
+  <!-- Upward tick on active segment (flick indicator) -->
+  <line x1="512" y1="148" x2="512" y2="110"
+        stroke="#e0d9ff" stroke-width="12" stroke-linecap="round" opacity="0.8"/>
+  <polyline points="488,132 512,108 536,132"
+            fill="none" stroke="#e0d9ff" stroke-width="10" stroke-linejoin="round" stroke-linecap="round" opacity="0.8"/>
+</svg>
