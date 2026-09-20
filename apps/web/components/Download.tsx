@@ -1,7 +1,7 @@
 // ponytail: static version for MVP — swap for GitHub Releases API fetch when first release ships
 const VERSION = "0.1.0";
 const DMG_URL =
-  "https://github.com/yourusername/biblo/releases/latest/download/Biblo.dmg";
+  "https://github.com/aryan-17/Biblo/releases/latest/download/Biblo-0.1.0.dmg";
 
 export default function Download() {
   return (
@@ -30,7 +30,7 @@ export default function Download() {
         </p>
 
         <p className="text-sm mb-10" style={{ color: "#5a5a72" }}>
-          Developer ID signed & notarized by Apple
+          Free beta · Apple Silicon · macOS 13+
         </p>
 
         <a
@@ -50,7 +50,7 @@ export default function Download() {
         </a>
 
         <p className="text-xs mt-6" style={{ color: "#3a3a50" }}>
-          Free during beta · Auto-updates via Sparkle
+          First launch: right-click → Open → Open to bypass Gatekeeper
         </p>
       </div>
     </section>
