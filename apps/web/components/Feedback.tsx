@@ -2,9 +2,8 @@
 
 import { useState, FormEvent } from "react";
 
-const FORMSPREE_ID = process.env.FORMSPREE_ID ?? "";
-
-export default function Feedback() {
+export default function Feedback({ formspreeId }: { formspreeId: string }) {
+  const FORMSPREE_ID = formspreeId;
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">(
     "idle"
   );

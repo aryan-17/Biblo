@@ -9,7 +9,7 @@ export default function Home() {
       <Hero />
       <Features />
       <Download />
-      <Feedback />
+      <Feedback formspreeId={process.env.FORMSPREE_ID ?? ""} />
     </main>
   );
 }
