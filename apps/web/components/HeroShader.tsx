@@ -187,7 +187,7 @@ export default function HeroShader() {
             color: "#a89ef9",
           }}
         >
-          macOS — Coming Soon
+          macOS · v0.1 Now Available
         </span>
 
         <h1
@@ -232,7 +232,7 @@ export default function HeroShader() {
               color: "#9090a8",
             }}
           >
-            See how it works
+            How it works
           </a>
         </div>
       </div>
