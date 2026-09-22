@@ -29,28 +29,16 @@ export default function VideoSection() {
             boxShadow: "0 0 48px rgba(124,106,247,0.12)",
           }}
         >
-          {/* ponytail: video src is placeholder — drop in real mp4 path when ready */}
           <video
             autoPlay
             muted
             loop
             playsInline
-            poster=""
             className="w-full block"
             style={{ aspectRatio: "16/9", objectFit: "cover" }}
           >
-            {/* src="" intentional — replace with real path when available */}
+            <source src="/biblo_1.mp4" type="video/mp4" />
           </video>
-
-          {/* Fallback shown when no video loads */}
-          <div
-            className="absolute inset-0 flex items-center justify-center"
-            style={{ background: "var(--surface)" }}
-          >
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-              Demo coming soon
-            </p>
-          </div>
         </div>
       </div>
     </section>
