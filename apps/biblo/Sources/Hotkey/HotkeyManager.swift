@@ -1,5 +1,6 @@
 import Carbon.HIToolbox
 import Foundation
+import AppKit
 
 // Global C function — required because @convention(c) closures can't capture context.
 // userData carries an unretained HotkeyManager pointer.
@@ -31,9 +32,16 @@ final class HotkeyManager {
     private var eventHandlerRef: EventHandlerRef?
     private var selfPtr: UnsafeMutableRawPointer?
 
+    private var lastKeyCode:  UInt32 = 0
+    private var lastModifiers: UInt32 = 0
+    private var wakeObserver: Any?
+
     /// Register a global hotkey. keyCode uses Carbon virtual key codes.
     /// F13 = 105, F14 = 107, F15 = 113
     func register(keyCode: UInt32, modifiers: UInt32 = 0) {
+        lastKeyCode   = keyCode
+        lastModifiers = modifiers
+
         let hkID = EventHotKeyID(signature: fourCC("BIBL"), id: 1)
         let status = RegisterEventHotKey(
             keyCode, modifiers, hkID,
@@ -53,21 +61,47 @@ final class HotkeyManager {
 
         // Retain self so the pointer stays valid for the lifetime of the handler.
         // Balanced by a release in deinit.
-        selfPtr = Unmanaged.passRetained(self).toOpaque()
-        InstallEventHandler(
-            GetApplicationEventTarget(),
-            carbonEventHandler,
-            specs.count,
-            &specs,
-            selfPtr,
-            &eventHandlerRef
+        if selfPtr == nil {
+            selfPtr = Unmanaged.passRetained(self).toOpaque()
+            InstallEventHandler(
+                GetApplicationEventTarget(),
+                carbonEventHandler,
+                specs.count,
+                &specs,
+                selfPtr,
+                &eventHandlerRef
+            )
+        }
+
+        // Re-register after wake — Carbon hotkeys don't survive sleep/wake.
+        if wakeObserver == nil {
+            wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
+                forName: NSWorkspace.didWakeNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                self?.reregister()
+            }
+        }
+    }
+
+    private func reregister() {
+        if let ref = hotKeyRef { UnregisterEventHotKey(ref); hotKeyRef = nil }
+        let hkID = EventHotKeyID(signature: fourCC("BIBL"), id: 1)
+        let status = RegisterEventHotKey(
+            lastKeyCode, lastModifiers, hkID,
+            GetApplicationEventTarget(), 0, &hotKeyRef
         )
+        if status != noErr {
+            print("Biblo: hotkey re-register after wake failed, OSStatus \(status)")
+        }
     }
 
     deinit {
         if let ref = hotKeyRef        { UnregisterEventHotKey(ref) }
         if let ref = eventHandlerRef  { RemoveEventHandler(ref) }
         if let ptr = selfPtr          { Unmanaged<HotkeyManager>.fromOpaque(ptr).release() }
+        if let obs = wakeObserver     { NSWorkspace.shared.notificationCenter.removeObserver(obs) }
     }
 }
 
