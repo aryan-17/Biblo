@@ -14,21 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ── Import Developer ID cert ─────────────────────────────────────────────
-      - name: Import certificate
-        env:
-          CERT_P12: ${{ secrets.APPLE_DEVELOPER_CERT_P12 }}
-          CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
-        run: |
-          echo "$CERT_P12" | base64 --decode > /tmp/cert.p12
-          security create-keychain -p "" build.keychain
-          security import /tmp/cert.p12 -k build.keychain -P "$CERT_PASSWORD" -T /usr/bin/codesign
-          security list-keychains -s build.keychain
-          security set-keychain-settings -t 3600 -l build.keychain
-          security unlock-keychain -p "" build.keychain
-          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
-
-      # ── Build & Archive ───────────────────────────────────────────────────────
+      # ── Build & Archive (unsigned) ────────────────────────────────────────────
       - name: Archive
         run: |
           xcodebuild archive \
@@ -36,32 +22,14 @@ jobs:
             -scheme Biblo \
             -configuration Release \
             -archivePath build/Biblo.xcarchive \
-            CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="Developer ID Application" \
-            OTHER_CODE_SIGN_FLAGS="--keychain build.keychain"
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
 
-      - name: Export
+      - name: Extract app
         run: |
-          xcodebuild -exportArchive \
-            -archivePath build/Biblo.xcarchive \
-            -exportOptionsPlist apps/biblo/ExportOptions.plist \
-            -exportPath build/export
-
-      # ── Notarize ─────────────────────────────────────────────────────────────
-      - name: Notarize
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          NOTARY_APP_PASSWORD: ${{ secrets.NOTARY_APP_PASSWORD }}
-          TEAM_ID: ${{ secrets.TEAM_ID }}
-        run: |
-          xcrun notarytool submit build/export/Biblo.app \
-            --apple-id "$APPLE_ID" \
-            --password "$NOTARY_APP_PASSWORD" \
-            --team-id "$TEAM_ID" \
-            --wait
-
-      - name: Staple
-        run: xcrun stapler staple build/export/Biblo.app
+          mkdir -p build/export
+          cp -R build/Biblo.xcarchive/Products/Applications/Biblo.app build/export/Biblo.app
 
       # ── Package DMG ──────────────────────────────────────────────────────────
       - name: Install create-dmg
