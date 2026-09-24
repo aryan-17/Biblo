@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  # ── Swift typecheck ──────────────────────────────────────────────────────────
+  swift:
+    name: Swift typecheck
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Typecheck
+        run: |
+          swiftc -typecheck -target arm64-apple-macosx13.0 \
+            -framework AppKit -framework Carbon -framework SwiftUI -framework Combine \
+            apps/biblo/Sources/**/*.swift
+
+      - name: Build (unsigned)
+        run: |
+          xcodebuild build \
+            -project apps/biblo/Biblo.xcodeproj \
+            -scheme Biblo \
+            -configuration Debug \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+  # ── Web typecheck + build ────────────────────────────────────────────────────
+  web:
+    name: Web build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install
+        run: cd apps/web && npm ci
+
+      - name: Typecheck
+        run: cd apps/web && npx tsc --noEmit
+
+      - name: Build
+        run: cd apps/web && npm run build

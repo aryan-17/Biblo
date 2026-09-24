@@ -4,16 +4,16 @@ on:
   workflow_dispatch:
 
 jobs:
-  nightly:
+  # ── Build app ────────────────────────────────────────────────────────────────
+  build:
+    name: Build & package
     runs-on: macos-15
     permissions:
       contents: write
-
     steps:
       - uses: actions/checkout@v4
 
-      # ── Build & Archive (unsigned) ────────────────────────────────────────────
-      - name: Archive
+      - name: Archive (unsigned)
         run: |
           xcodebuild archive \
             -project apps/biblo/Biblo.xcodeproj \
@@ -29,7 +29,6 @@ jobs:
           mkdir -p build/export
           cp -R build/Biblo.xcarchive/Products/Applications/Biblo.app build/export/Biblo.app
 
-      # ── Package DMG ──────────────────────────────────────────────────────────
       - name: Install create-dmg
         run: brew install create-dmg
 
@@ -47,8 +46,18 @@ jobs:
             "build/Biblo-nightly.dmg" \
             "build/export/Biblo.app"
 
-      # ── Publish rolling nightly pre-release ───────────────────────────────────
-      - name: Publish nightly release
+      # ── Smoke test: mount DMG, verify app exists and binary runs ─────────────
+      - name: Smoke test DMG
+        run: |
+          hdiutil attach build/Biblo-nightly.dmg -nobrowse -quiet
+          MOUNT=$(hdiutil info | grep "Biblo" | awk '{print $NF}')
+          test -d "${MOUNT}/Biblo.app" || { echo "Biblo.app not found in DMG"; exit 1; }
+          test -x "${MOUNT}/Biblo.app/Contents/MacOS/Biblo" || { echo "Binary not executable"; exit 1; }
+          echo "Smoke test passed"
+          hdiutil detach "${MOUNT}" -quiet
+
+      # ── Publish rolling nightly release ──────────────────────────────────────
+      - name: Publish nightly
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

@@ -20,16 +20,22 @@ jobs:
           CERT_P12: ${{ secrets.APPLE_DEVELOPER_CERT_P12 }}
           CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
         run: |
-          echo "$CERT_P12" | base64 --decode > /tmp/cert.p12
-          security create-keychain -p "" build.keychain
-          security import /tmp/cert.p12 -k build.keychain -P "$CERT_PASSWORD" -T /usr/bin/codesign
-          security list-keychains -s build.keychain
-          security set-keychain-settings -t 3600 -l build.keychain
-          security unlock-keychain -p "" build.keychain
-          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+          if [ -z "$CERT_P12" ]; then
+            echo "::warning::No signing certificate — building unsigned"
+            echo "UNSIGNED=true" >> $GITHUB_ENV
+          else
+            echo "$CERT_P12" | base64 --decode > /tmp/cert.p12
+            security create-keychain -p "" build.keychain
+            security import /tmp/cert.p12 -k build.keychain -P "$CERT_PASSWORD" -T /usr/bin/codesign
+            security list-keychains -s build.keychain
+            security set-keychain-settings -t 3600 -l build.keychain
+            security unlock-keychain -p "" build.keychain
+            security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+          fi
 
       # ── Build & Archive ───────────────────────────────────────────────────────
-      - name: Archive
+      - name: Archive (signed)
+        if: env.UNSIGNED != 'true'
         run: |
           xcodebuild archive \
             -project apps/biblo/Biblo.xcodeproj \
@@ -40,15 +46,26 @@ jobs:
             CODE_SIGN_IDENTITY="Developer ID Application" \
             OTHER_CODE_SIGN_FLAGS="--keychain build.keychain"
 
+      - name: Archive (unsigned)
+        if: env.UNSIGNED == 'true'
+        run: |
+          xcodebuild archive \
+            -project apps/biblo/Biblo.xcodeproj \
+            -scheme Biblo \
+            -configuration Release \
+            -archivePath build/Biblo.xcarchive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
       - name: Export
         run: |
-          xcodebuild -exportArchive \
-            -archivePath build/Biblo.xcarchive \
-            -exportOptionsPlist apps/biblo/ExportOptions.plist \
-            -exportPath build/export
+          mkdir -p build/export
+          cp -R build/Biblo.xcarchive/Products/Applications/Biblo.app build/export/Biblo.app
 
-      # ── Notarize ─────────────────────────────────────────────────────────────
+      # ── Notarize (only if signed) ───────────────────────────────────────────
       - name: Notarize
+        if: env.UNSIGNED != 'true'
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           NOTARY_APP_PASSWORD: ${{ secrets.NOTARY_APP_PASSWORD }}
@@ -61,6 +78,7 @@ jobs:
             --wait
 
       - name: Staple
+        if: env.UNSIGNED != 'true'
         run: xcrun stapler staple build/export/Biblo.app
 
       # ── Package DMG ──────────────────────────────────────────────────────────
@@ -82,6 +100,17 @@ jobs:
             "build/Biblo-${VERSION}.dmg" \
             "build/export/Biblo.app"
 
+      # ── Smoke test ───────────────────────────────────────────────────────────
+      - name: Smoke test DMG
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          hdiutil attach "build/Biblo-${VERSION}.dmg" -nobrowse -quiet
+          MOUNT=$(hdiutil info | grep "Biblo" | awk '{print $NF}')
+          test -d "${MOUNT}/Biblo.app" || { echo "Biblo.app not found"; exit 1; }
+          test -x "${MOUNT}/Biblo.app/Contents/MacOS/Biblo" || { echo "Binary not executable"; exit 1; }
+          echo "Smoke test passed"
+          hdiutil detach "${MOUNT}" -quiet
+
       # ── Publish GitHub Release ────────────────────────────────────────────────
       - name: Publish release
         env:
@@ -92,47 +121,3 @@ jobs:
             --title "Biblo $GITHUB_REF_NAME" \
             --generate-notes \
             "build/Biblo-${VERSION}.dmg"
-
-      # ── Update appcast ────────────────────────────────────────────────────────
-      - name: Update appcast.xml
-        env:
-          SPARKLE_ED_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
-        run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          DMG="build/Biblo-${VERSION}.dmg"
-          SIZE=$(stat -f%z "$DMG")
-          DATE=$(date -u "+%a, %d %b %Y %H:%M:%S +0000")
-          # Sign with Sparkle's sign_update tool (must be in PATH from Sparkle SPM)
-          # SIGNATURE=$(./sparkle/bin/sign_update "$DMG" "$SPARKLE_ED_KEY")
-          SIGNATURE="REPLACE_WITH_SPARKLE_SIGNATURE"
-
-          ITEM="    <item>
-              <title>Version ${VERSION}</title>
-              <sparkle:version>${VERSION}</sparkle:version>
-              <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
-              <pubDate>${DATE}</pubDate>
-              <enclosure
-                url=\"https://github.com/${{ github.repository }}/releases/download/${GITHUB_REF_NAME}/Biblo-${VERSION}.dmg\"
-                sparkle:edSignature=\"${SIGNATURE}\"
-                length=\"${SIZE}\"
-                type=\"application/octet-stream\"/>
-            </item>"
-
-          # Insert after <language> line
-          python3 - <<'PY'
-          import re, sys
-          item = open('/dev/stdin').read() if False else """${ITEM}"""
-          xml = open('releases/appcast.xml').read()
-          xml = xml.replace('    <!-- Releases will be added here by CI on every tagged push -->', item + '\n    <!-- Releases will be added here by CI on every tagged push -->')
-          open('releases/appcast.xml', 'w').write(xml)
-          PY
-
-          cp releases/appcast.xml apps/web/public/appcast.xml
-
-      - name: Commit updated appcast
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add releases/appcast.xml apps/web/public/appcast.xml
-          git commit -m "chore: update appcast for $GITHUB_REF_NAME" || true
-          git push origin HEAD:main
