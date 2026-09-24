@@ -1,0 +1,96 @@
+name: Nightly
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  nightly:
+    runs-on: macos-15
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Import Developer ID cert ─────────────────────────────────────────────
+      - name: Import certificate
+        env:
+          CERT_P12: ${{ secrets.APPLE_DEVELOPER_CERT_P12 }}
+          CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
+        run: |
+          echo "$CERT_P12" | base64 --decode > /tmp/cert.p12
+          security create-keychain -p "" build.keychain
+          security import /tmp/cert.p12 -k build.keychain -P "$CERT_PASSWORD" -T /usr/bin/codesign
+          security list-keychains -s build.keychain
+          security set-keychain-settings -t 3600 -l build.keychain
+          security unlock-keychain -p "" build.keychain
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+
+      # ── Build & Archive ───────────────────────────────────────────────────────
+      - name: Archive
+        run: |
+          xcodebuild archive \
+            -project apps/biblo/Biblo.xcodeproj \
+            -scheme Biblo \
+            -configuration Release \
+            -archivePath build/Biblo.xcarchive \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Developer ID Application" \
+            OTHER_CODE_SIGN_FLAGS="--keychain build.keychain"
+
+      - name: Export
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath build/Biblo.xcarchive \
+            -exportOptionsPlist apps/biblo/ExportOptions.plist \
+            -exportPath build/export
+
+      # ── Notarize ─────────────────────────────────────────────────────────────
+      - name: Notarize
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          NOTARY_APP_PASSWORD: ${{ secrets.NOTARY_APP_PASSWORD }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+        run: |
+          xcrun notarytool submit build/export/Biblo.app \
+            --apple-id "$APPLE_ID" \
+            --password "$NOTARY_APP_PASSWORD" \
+            --team-id "$TEAM_ID" \
+            --wait
+
+      - name: Staple
+        run: xcrun stapler staple build/export/Biblo.app
+
+      # ── Package DMG ──────────────────────────────────────────────────────────
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Create DMG
+        run: |
+          create-dmg \
+            --volname "Biblo" \
+            --volicon "apps/biblo/Assets.xcassets/AppIcon.appiconset/icon_512x512.png" \
+            --window-pos 200 120 \
+            --window-size 800 400 \
+            --icon-size 100 \
+            --icon "Biblo.app" 200 185 \
+            --hide-extension "Biblo.app" \
+            --app-drop-link 600 185 \
+            "build/Biblo-nightly.dmg" \
+            "build/export/Biblo.app"
+
+      # ── Publish rolling nightly pre-release ───────────────────────────────────
+      - name: Publish nightly release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SHA=$(git rev-parse --short HEAD)
+          gh release delete nightly --yes 2>/dev/null || true
+          git push origin :refs/tags/nightly 2>/dev/null || true
+          gh release create nightly \
+            --title "Nightly (${SHA})" \
+            --notes "Built from \`${SHA}\` on \`main\`. Not a stable release." \
+            --prerelease \
+            "build/Biblo-nightly.dmg"
