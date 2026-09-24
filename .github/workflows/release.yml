@@ -72,7 +72,7 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           create-dmg \
             --volname "Biblo" \
-            --volicon "apps/biblo/Assets.xcassets/AppIcon.appiconset/icon_512x512.png" \
+            --volicon "apps/biblo/Resources/Assets.xcassets/AppIcon.appiconset/icon_512x512.png" \
             --window-pos 200 120 \
             --window-size 800 400 \
             --icon-size 100 \
