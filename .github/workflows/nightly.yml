@@ -60,5 +60,4 @@ jobs:
           gh release create nightly \
             --title "Nightly (${SHA})" \
             --notes "Built from \`${SHA}\` on \`main\`. Not a stable release." \
-            --prerelease \
             "build/Biblo-nightly.dmg"
