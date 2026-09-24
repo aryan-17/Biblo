@@ -1,0 +1,65 @@
+name: Version & Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Override bump type (leave empty for auto-detect from commits)"
+        required: false
+        type: choice
+        options:
+          - ""
+          - patch
+          - minor
+          - major
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version bump
+        id: bump
+        run: |
+          CURRENT=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "current=${CURRENT}" >> $GITHUB_OUTPUT
+
+          MAJOR=$(echo "$CURRENT" | sed 's/v//' | cut -d. -f1)
+          MINOR=$(echo "$CURRENT" | sed 's/v//' | cut -d. -f2)
+          PATCH=$(echo "$CURRENT" | sed 's/v//' | cut -d. -f3)
+
+          # Manual override or auto-detect from conventional commits
+          BUMP="${{ inputs.bump }}"
+          if [ -z "$BUMP" ]; then
+            LOGS=$(git log "${CURRENT}..HEAD" --pretty=format:"%s" 2>/dev/null || git log --pretty=format:"%s")
+
+            if echo "$LOGS" | grep -qE '^[a-z]+(\(.+\))?!:'; then
+              BUMP="major"
+            elif echo "$LOGS" | grep -qE '^feat(\(.+\))?:'; then
+              BUMP="minor"
+            else
+              BUMP="patch"
+            fi
+          fi
+
+          case "$BUMP" in
+            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH + 1)) ;;
+          esac
+
+          NEW="v${MAJOR}.${MINOR}.${PATCH}"
+          echo "bump=${BUMP}" >> $GITHUB_OUTPUT
+          echo "version=${NEW}" >> $GITHUB_OUTPUT
+          echo "Bump: ${BUMP} | ${CURRENT} → ${NEW}"
+
+      - name: Create and push tag
+        run: |
+          git tag "${{ steps.bump.outputs.version }}"
+          git push origin "${{ steps.bump.outputs.version }}"
+          echo "Tagged ${{ steps.bump.outputs.version }} — release workflow will handle the rest"
