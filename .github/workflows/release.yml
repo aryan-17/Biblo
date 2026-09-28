@@ -29,7 +29,8 @@ jobs:
       - name: Determine version bump
         id: bump
         run: |
-          CURRENT=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          CURRENT=$(git tag -l 'v*' --sort=-v:refname | head -1)
+          CURRENT=${CURRENT:-v0.0.0}
           echo "current=${CURRENT}" >> $GITHUB_OUTPUT
 
           MAJOR=$(echo "$CURRENT" | sed 's/v//' | cut -d. -f1)
