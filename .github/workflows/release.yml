@@ -172,7 +172,7 @@ jobs:
         run: |
           VERSION="${VERSION_TAG#v}"
           hdiutil attach "build/Biblo-${VERSION}.dmg" -nobrowse -quiet
-          MOUNT=$(hdiutil info | grep "Biblo" | awk '{print $NF}')
+          MOUNT="/Volumes/Biblo"
           test -d "${MOUNT}/Biblo.app" || { echo "Biblo.app not found"; exit 1; }
           test -x "${MOUNT}/Biblo.app/Contents/MacOS/Biblo" || { echo "Binary not executable"; exit 1; }
           echo "Smoke test passed"
