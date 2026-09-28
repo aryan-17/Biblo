@@ -14,7 +14,9 @@ final class WheelPanel: NSPanel {
             backing: .buffered,
             defer: true
         )
-        level             = .floating
+        // Must sit above fullscreen apps (level 1000+).
+        // kCGScreenSaverWindowLevel (1000) clears that bar.
+        level             = NSWindow.Level(rawValue: Int(CGShieldingWindowLevel()) + 1)
         isOpaque          = false
         backgroundColor   = .clear
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
