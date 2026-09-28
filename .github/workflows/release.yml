@@ -1,18 +1,85 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Override bump type (leave empty for auto-detect from commits)"
+        required: false
+        type: choice
+        options:
+          - ""
+          - patch
+          - minor
+          - major
 
 jobs:
+  # ── Version ──────────────────────────────────────────────────────────────────
+  version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.bump.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version bump
+        id: bump
+        run: |
+          CURRENT=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "current=${CURRENT}" >> $GITHUB_OUTPUT
+
+          MAJOR=$(echo "$CURRENT" | sed 's/v//' | cut -d. -f1)
+          MINOR=$(echo "$CURRENT" | sed 's/v//' | cut -d. -f2)
+          PATCH=$(echo "$CURRENT" | sed 's/v//' | cut -d. -f3)
+
+          # Manual override or auto-detect from conventional commits
+          BUMP="${{ inputs.bump }}"
+          if [ -z "$BUMP" ]; then
+            LOGS=$(git log "${CURRENT}..HEAD" --pretty=format:"%s" 2>/dev/null || git log --pretty=format:"%s")
+
+            if echo "$LOGS" | grep -qE '^[a-z]+(\(.+\))?!:'; then
+              BUMP="major"
+            elif echo "$LOGS" | grep -qE '^feat(\(.+\))?:'; then
+              BUMP="minor"
+            else
+              BUMP="patch"
+            fi
+          fi
+
+          case "$BUMP" in
+            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH + 1)) ;;
+          esac
+
+          NEW="v${MAJOR}.${MINOR}.${PATCH}"
+          echo "bump=${BUMP}" >> $GITHUB_OUTPUT
+          echo "version=${NEW}" >> $GITHUB_OUTPUT
+          echo "Bump: ${BUMP} | ${CURRENT} → ${NEW}"
+
+      - name: Create and push tag
+        run: |
+          git tag "${{ steps.bump.outputs.version }}"
+          git push origin "${{ steps.bump.outputs.version }}"
+
+  # ── Build & Release ──────────────────────────────────────────────────────────
   build-and-release:
+    needs: version
     runs-on: macos-15
     permissions:
       contents: write
 
+    env:
+      VERSION_TAG: ${{ needs.version.outputs.tag }}
+
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version.outputs.tag }}
 
       # ── Import Developer ID cert ─────────────────────────────────────────────
       - name: Import certificate
@@ -87,7 +154,7 @@ jobs:
 
       - name: Create DMG
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${VERSION_TAG#v}"
           create-dmg \
             --volname "Biblo" \
             --volicon "apps/biblo/Resources/Assets.xcassets/AppIcon.appiconset/icon_512x512.png" \
@@ -103,7 +170,7 @@ jobs:
       # ── Smoke test ───────────────────────────────────────────────────────────
       - name: Smoke test DMG
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${VERSION_TAG#v}"
           hdiutil attach "build/Biblo-${VERSION}.dmg" -nobrowse -quiet
           MOUNT=$(hdiutil info | grep "Biblo" | awk '{print $NF}')
           test -d "${MOUNT}/Biblo.app" || { echo "Biblo.app not found"; exit 1; }
@@ -116,8 +183,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          gh release create "$GITHUB_REF_NAME" \
-            --title "Biblo $GITHUB_REF_NAME" \
+          VERSION="${VERSION_TAG#v}"
+          gh release create "$VERSION_TAG" \
+            --title "Biblo $VERSION_TAG" \
             --generate-notes \
             "build/Biblo-${VERSION}.dmg"
