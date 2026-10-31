@@ -1,6 +1,6 @@
 # Biblo
 
-A GTA V-style radial command wheel for macOS. Hold a hotkey, flick a direction, release — apps open, commands run, URLs load. No mouse required, no menus, no context switching.
+A radial command wheel for macOS. Hold a hotkey, flick a direction, release — apps open, commands run, URLs load. No mouse required, no menus, no context switching.
 
 ![macOS 13+](https://img.shields.io/badge/macOS-13%2B-black) ![Swift 5.9](https://img.shields.io/badge/Swift-5.9-orange)
 
